@@ -1,4 +1,6 @@
 using BetterYYSLS.Core.Config;
+using BetterYYSLS.Core.Input;
+using BetterYYSLS.Core.Input.Backends.Win32;
 using BetterYYSLS.GameTask.Model;
 using BetterYYSLS.GameTask.Model.Enum;
 using BetterYYSLS.Helpers;
@@ -95,6 +97,8 @@ namespace BetterYYSLS.GameTask
 
             // 初始化任务上下文(一定要在初始化触发器前完成)
             TaskContext.Instance().Init(hWnd);
+            // 接入统一输入层：前台 SendInput，后台 PostMessage
+            InputHub.Attach(new Win32InputBackend(hWnd));
             PrintSystemInfo();
 
             // 初始化触发器(一定要在任务上下文初始化完毕后使用)
@@ -142,6 +146,8 @@ namespace BetterYYSLS.GameTask
         {
             _timer.Stop();
             GameCapture?.Stop();
+            InputHub.ReleaseAll();
+            InputHub.Attach(new Win32InputBackend(IntPtr.Zero));
             _gameRect = RECT.Empty;
             _prevGameActive = false;
         }

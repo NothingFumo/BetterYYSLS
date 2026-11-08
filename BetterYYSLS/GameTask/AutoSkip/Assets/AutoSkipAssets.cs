@@ -1,12 +1,11 @@
 using BetterYYSLS.Core.Recognition;
 using BetterYYSLS.GameTask.Model;
-using OpenCvSharp;
 
 namespace BetterYYSLS.GameTask.AutoSkip.Assets;
 
 /// <summary>
-/// 自动剧情识别素材。模板以 1920×1080 截取，运行时按游戏分辨率自动缩放。
-/// 素材来源为《燕云十六声》剧情界面截图，ROI 按当前捕获区域比例计算。
+/// 自动剧情识别素材。对象与 ROI 由同目录的 Recognition.json 定义，
+/// 模板以 1920×1080 截取，运行时按游戏分辨率缩放。
 /// </summary>
 public class AutoSkipAssets : BaseAssets<AutoSkipAssets>
 {
@@ -36,48 +35,16 @@ public class AutoSkipAssets : BaseAssets<AutoSkipAssets>
 
     private AutoSkipAssets()
     {
-        var w = CaptureRect.Width;
-        var h = CaptureRect.Height;
+        var width = CaptureRect.Width;
+        var height = CaptureRect.Height;
 
-        // 右下角操作提示区
-        ResumeRo = Build("resume.png", new Rect(w - 340, h - 110, 180, 90), 0.8);
-        SkipRo = Build("skip.png", new Rect(w - 220, h - 110, 210, 90), 0.8);
-        PauseRo = Build("pause.png", new Rect(w - 380, h - 110, 210, 90), 0.8);
-
-        // 屏幕中央的跳过确认
-        ConfirmRo = Build("confirm.png", new Rect(w / 2 - 240, h / 2 + 30, 480, 130), 0.8);
-
-        // NPC 头顶的跟随提示
-        FollowRo = Build("follow.png", new Rect(w / 2 - 320, h / 2 + 20, 400, 160), 0.72);
-
-        // 右侧对话选项列表
-        OptionFirstRo = Build("option_first.png", new Rect(w - 760, h / 2 + 40, 760, 200), 0.75);
-
-        // 任务界面左上角“进行中”标签
-        QuestPanelRo = Build("quest_panel.png",
-            new Rect((int)(w * 0.05), (int)(h * 0.02), (int)(w * 0.16), (int)(h * 0.1)), 0.8);
-
-        // 任务界面左下角“返回”，标签颜色变化时仍可识别
-        QuestPanelFallbackRo = Build("quest_panel_fallback.png",
-            new Rect((int)(w * 0.02), (int)(h * 0.86), (int)(w * 0.15), (int)(h * 0.12)), 0.8);
-    }
-
-    /// <summary>
-    /// 构建单个识别对象
-    /// </summary>
-    /// <param name="file">模板文件名</param>
-    /// <param name="roi">识别区域（当前捕获区域坐标）</param>
-    /// <param name="threshold">匹配阈值</param>
-    private static RecognitionObject Build(string file, Rect roi, double threshold)
-    {
-        return new RecognitionObject
-        {
-            Name = file,
-            RecognitionType = RecognitionTypes.TemplateMatch,
-            TemplateImageMat = GameTaskManager.LoadAssetImage("AutoSkip", file),
-            RegionOfInterest = roi,
-            Threshold = threshold,
-            DrawOnWindow = true,
-        }.InitTemplate();
+        ResumeRo = RecognitionAssets.Get("AutoSkip", "Resume", width, height);
+        SkipRo = RecognitionAssets.Get("AutoSkip", "Skip", width, height);
+        ConfirmRo = RecognitionAssets.Get("AutoSkip", "Confirm", width, height);
+        PauseRo = RecognitionAssets.Get("AutoSkip", "Pause", width, height);
+        FollowRo = RecognitionAssets.Get("AutoSkip", "Follow", width, height);
+        OptionFirstRo = RecognitionAssets.Get("AutoSkip", "OptionFirst", width, height);
+        QuestPanelRo = RecognitionAssets.Get("AutoSkip", "QuestPanel", width, height);
+        QuestPanelFallbackRo = RecognitionAssets.Get("AutoSkip", "QuestPanelFallback", width, height);
     }
 }

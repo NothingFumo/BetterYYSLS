@@ -1,5 +1,7 @@
 using BetterYYSLS.Core.Config;
-using BetterYYSLS.Core.Simulator;
+using BetterYYSLS.Core.Input;
+using BetterYYSLS.Core.Recognition;
+using BetterYYSLS.Core.Recognition.OpenCv;
 using BetterYYSLS.GameTask.AutoSkip.Assets;
 using BetterYYSLS.GameTask.Model.Area;
 using BetterYYSLS.Helpers;
@@ -90,14 +92,20 @@ public class AutoSkipTrigger : ITaskTrigger
 
     private readonly ILogger<AutoSkipTrigger> _logger = App.GetLogger<AutoSkipTrigger>();
 
-    /// <summary>后台按键模拟器，首次使用时创建</summary>
-    private PostMessageSimulator? _simulator;
-
     /// <summary>下一次允许操作的时间</summary>
     private DateTime _nextActionTime = DateTime.MinValue;
 
     /// <summary>最近一次识别到“剧情播放中”的时间</summary>
     private DateTime _lastPlayingTime = DateTime.MinValue;
+
+    /// <summary>最近一次识别到任意剧情界面的时间，用于避免剧情刚结束时误开任务界面</summary>
+    private DateTime _lastTalkTime = DateTime.MinValue;
+
+    /// <summary>最近一次黑屏点击的时间</summary>
+    private DateTime _prevClickTime = DateTime.MinValue;
+
+    /// <summary>任务界面是否已点击过“任务”菜单</summary>
+    private bool _questMenuClicked;
 
     /// <summary>本次剧情是否已按过 R 倍速</summary>
     private bool _speedUpSent;
@@ -169,7 +177,6 @@ public class AutoSkipTrigger : ITaskTrigger
         }
 
         IsEnabled = enabled;
-        _simulator ??= Simulation.PostMessage(TaskContext.Instance().GameHandle);
         _speedUpSent = false;
         _optionState = OptionState.Idle;
         _optionSteps = 0;
@@ -186,6 +193,7 @@ public class AutoSkipTrigger : ITaskTrigger
         _questSteps = 0;
         _tabSteps = 0;
         _tabResetDone = false;
+        _questMenuClicked = false;
         _questDone = config?.TrackQuestOnStart != true;
         _nextActionTime = DateTime.MinValue;
     }
@@ -204,8 +212,10 @@ public class AutoSkipTrigger : ITaskTrigger
 
         try
         {
+            var now = DateTime.Now;
+
             // 统一按时间点调度，避免连按；每个动作自行设置下一次允许时间
-            if (DateTime.Now < _nextActionTime)
+            if (now < _nextActionTime)
             {
                 return;
             }
@@ -213,67 +223,73 @@ public class AutoSkipTrigger : ITaskTrigger
             var area = content.CaptureRectArea;
 
             // 1. 跳过确认弹窗优先级最高，避免确认框停留时继续触发跳过
-            if (area.Find(AutoSkipAssets.Instance.ConfirmRo).IsExist())
+            if (Exists(area, AutoSkipAssets.Instance.ConfirmRo))
             {
+                _lastTalkTime = now;
                 Press(User32.VK.VK_SPACE);
-                _nextActionTime = DateTime.Now.AddMilliseconds(800);
+                _nextActionTime = now.AddMilliseconds(800);
                 return;
             }
 
             // 2. 剧情暂停，按 T 继续
             if (config.ResumeWhenPaused &&
-                area.Find(AutoSkipAssets.Instance.ResumeRo).IsExist())
+                Exists(area, AutoSkipAssets.Instance.ResumeRo))
             {
+                _lastTalkTime = now;
                 Press(User32.VK.VK_T);
-                _nextActionTime = DateTime.Now.AddMilliseconds(400);
+                _nextActionTime = now.AddMilliseconds(400);
                 return;
             }
 
             // 3. 可跳过剧情，按 Space 请求跳过
             if (config.SkipCutscene &&
-                area.Find(AutoSkipAssets.Instance.SkipRo).IsExist())
+                Exists(area, AutoSkipAssets.Instance.SkipRo))
             {
+                _lastTalkTime = now;
                 Press(User32.VK.VK_SPACE);
-                _nextActionTime = DateTime.Now.AddMilliseconds(800);
+                _nextActionTime = now.AddMilliseconds(800);
                 return;
             }
 
-            // 4. 剧情正在播放：先按 R 倍速，再按 Space 跳过
-            if (area.Find(AutoSkipAssets.Instance.PauseRo).IsExist())
+            // 4. 剧情正在播放：先按 R 倍速，再按 Space 推进
+            if (Exists(area, AutoSkipAssets.Instance.PauseRo))
             {
-                _lastPlayingTime = DateTime.Now;
+                _lastTalkTime = now;
+                _lastPlayingTime = now;
                 if (config.SpeedUpDialogue && !_speedUpSent)
                 {
                     Press(User32.VK.VK_R);
                     _speedUpSent = true;
-                    _nextActionTime = DateTime.Now.AddMilliseconds(300);
+                    _nextActionTime = now.AddMilliseconds(300);
                     return;
                 }
 
                 Press(User32.VK.VK_SPACE);
-                _nextActionTime = DateTime.Now.AddMilliseconds(700);
+                _nextActionTime = now.AddMilliseconds(700);
                 return;
             }
 
             // 播放提示消失一段时间后，允许下一次剧情重新按 R
-            if ((DateTime.Now - _lastPlayingTime).TotalSeconds > 3)
+            if ((now - _lastPlayingTime).TotalSeconds > 3)
             {
                 _speedUpSent = false;
             }
 
             // 5. 跟随 NPC
             if (config.FollowNpc &&
-                area.Find(AutoSkipAssets.Instance.FollowRo).IsExist())
+                Exists(area, AutoSkipAssets.Instance.FollowRo))
             {
+                _lastTalkTime = now;
                 Press(User32.VK.VK_G);
-                _nextActionTime = DateTime.Now.AddMilliseconds(1000);
+                _nextActionTime = now.AddMilliseconds(1000);
                 return;
             }
 
             // 6. 对话选项：滚轮回到顶部，滚到目标项后按 F 确认
             if (config.SelectFirstOption &&
-                area.Find(AutoSkipAssets.Instance.OptionFirstRo).IsExist())
+                Exists(area, AutoSkipAssets.Instance.OptionFirstRo))
             {
+                _lastTalkTime = now;
                 HandleOptionSelection(config);
                 return;
             }
@@ -281,9 +297,33 @@ public class AutoSkipTrigger : ITaskTrigger
             _optionState = OptionState.Idle;
             _optionSteps = 0;
 
-            // 7. 没有剧情提示时，按 J 打开任务界面，滚轮滚动并点击指定任务
-            if (!_questDone && config.TrackQuestOnStart)
+            // 7. 黑屏剧情：中间区域大面积纯黑时点击鼠标推进
+            if (ClickBlackGameScreen(area))
             {
+                return;
+            }
+
+            // 8. 剧情结束后才处理任务追踪，避免在对话界面误开任务面板
+            if (!_questDone && config.TrackQuestOnStart &&
+                (now - _lastTalkTime).TotalSeconds > 3)
+            {
+                // 不指定任务序号时只按 N 追踪当前任务，不打开任务界面
+                if (config.QuestSelectIndex < 0)
+                {
+                    if (!SystemControl.IsGameActive())
+                    {
+                        SystemControl.ActivateWindow();
+                        _nextActionTime = now.AddMilliseconds(300);
+                        return;
+                    }
+
+                    PressForeground(User32.VK.VK_N);
+                    _questDone = true;
+                    _nextActionTime = now.AddMilliseconds(500);
+                    _logger.LogInformation("已按 N 追踪当前任务");
+                    return;
+                }
+
                 HandleQuestTracking(area, config);
             }
         }
@@ -292,6 +332,65 @@ public class AutoSkipTrigger : ITaskTrigger
             // 素材未就绪或识别失败时只记录日志，避免中断整个调度循环
             _logger.LogWarning(e, "自动剧情识别失败");
             _nextActionTime = DateTime.Now.AddMilliseconds(1000);
+        }
+    }
+
+    /// <summary>
+    /// 查找模板并释放结果区域，避免每帧持有未释放的 Region。
+    /// </summary>
+    private static bool Exists(ImageRegion area, RecognitionObject ro)
+    {
+        using var ra = area.Find(ro);
+        return ra.IsExist();
+    }
+
+    /// <summary>
+    /// 黑屏剧情点击。参考原版：取画面中间三分之一，纯黑比例大于 50%
+    /// 且不接近全黑时点击一次，防止过场黑屏卡住。
+    /// </summary>
+    private bool ClickBlackGameScreen(ImageRegion area)
+    {
+        if ((DateTime.Now - _prevClickTime).TotalMilliseconds <= 1200)
+        {
+            return false;
+        }
+
+        // 只在识别到剧情界面后的 10 秒内允许黑屏点击，避免在菜单/加载界面误点
+        if (_lastTalkTime == DateTime.MinValue ||
+            (DateTime.Now - _lastTalkTime).TotalSeconds > 10)
+        {
+            return false;
+        }
+
+        try
+        {
+            var gray = area.SrcGreyMat;
+            var middleHeight = gray.Height / 3;
+            using var middle = new Mat(gray, new Rect(0, middleHeight, gray.Width, middleHeight));
+            var rate = OpenCvCommonHelper.CountGrayMatColor(middle, 0) * 1d
+                       / (middle.Width * middle.Height);
+
+            if (rate is < 0.5 or >= 0.98999)
+            {
+                return false;
+            }
+
+            if (!SystemControl.IsGameActive())
+            {
+                SystemControl.ActivateWindow();
+                _nextActionTime = DateTime.Now.AddMilliseconds(300);
+                return true;
+            }
+
+            InputHub.Foreground.Mouse.LeftButtonClick();
+            _prevClickTime = DateTime.Now;
+            _logger.LogDebug("自动剧情：点击黑屏，比例 {Rate:F2}", rate);
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogDebug(e, "黑屏检测失败");
+            return false;
         }
     }
 
@@ -410,6 +509,14 @@ public class AutoSkipTrigger : ITaskTrigger
                 }
                 else if (++_questAttempts < 30)
                 {
+                    // J 在燕云中打开的是 ESC 菜单，需要再点击“任务”菜单项进入任务界面
+                    if (!_questMenuClicked && _questAttempts == 2)
+                    {
+                        ClickPercent(0.778, 0.692);
+                        _questMenuClicked = true;
+                        _logger.LogInformation("点击任务菜单");
+                    }
+
                     // 只按一次 J，之后轮询等待界面淡入，避免再次按 J 把界面关掉
                     if (_questAttempts % 4 == 0)
                     {
@@ -423,6 +530,7 @@ public class AutoSkipTrigger : ITaskTrigger
                     // 等待超时仍未识别到任务界面，保存当前画面便于诊断
                     _logger.LogWarning("未能打开任务界面，亮度比例 {Ratio:F2}，跳过自动追踪",
                         _lastPanelRatio);
+                    PressForeground(User32.VK.VK_ESCAPE);
                     SaveFailureFrame(area);
                     _questState = QuestState.Done;
                     _questDone = true;
@@ -597,7 +705,7 @@ public class AutoSkipTrigger : ITaskTrigger
     private void WheelAt(double xPercent, double yPercent, int clicks)
     {
         MoveMouseToPercent(xPercent, yPercent);
-        Simulation.SendInput.Mouse.VerticalScroll(clicks);
+        InputHub.Foreground.Mouse.VerticalScroll(clicks);
         _logger.LogDebug("自动剧情滚轮：{Clicks}", clicks);
     }
 
@@ -609,7 +717,7 @@ public class AutoSkipTrigger : ITaskTrigger
     private void ClickPercent(double xPercent, double yPercent)
     {
         MoveMouseToPercent(xPercent, yPercent);
-        Simulation.SendInput.Mouse.LeftButtonClick();
+        InputHub.Foreground.Mouse.LeftButtonClick();
     }
 
     /// <summary>
@@ -623,7 +731,7 @@ public class AutoSkipTrigger : ITaskTrigger
         var screen = PrimaryScreen.WorkingArea;
         var x = capture.X + capture.Width * xPercent;
         var y = capture.Y + capture.Height * yPercent;
-        Simulation.SendInput.Mouse.MoveMouseTo(x * 65535d / screen.Width, y * 65535d / screen.Height);
+        InputHub.Foreground.Mouse.MoveMouseTo(x * 65535d / screen.Width, y * 65535d / screen.Height);
     }
 
     /// <summary>
@@ -632,8 +740,7 @@ public class AutoSkipTrigger : ITaskTrigger
     /// <param name="key">虚拟键码</param>
     private void Press(User32.VK key)
     {
-        _simulator ??= Simulation.PostMessage(TaskContext.Instance().GameHandle);
-        _simulator.KeyPressBackground(key);
+        InputHub.Background.Keyboard.KeyPress(key);
         _logger.LogDebug("自动剧情按键：{Key}", key);
     }
 
@@ -663,9 +770,9 @@ public class AutoSkipTrigger : ITaskTrigger
     /// <param name="key">虚拟键码</param>
     private void PressForeground(User32.VK key)
     {
-        Simulation.SendInput.Keyboard.KeyDown(key);
+        InputHub.Foreground.Keyboard.KeyDown(key);
         System.Threading.Thread.Sleep(50);
-        Simulation.SendInput.Keyboard.KeyUp(key);
+        InputHub.Foreground.Keyboard.KeyUp(key);
         _logger.LogDebug("自动剧情前台按键：{Key}", key);
     }
 }

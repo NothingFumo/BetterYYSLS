@@ -69,6 +69,9 @@
 		<None Update="GameTask\AutoSkip\Assets\**\*.png">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="GameTask\AutoSkip\Assets\Recognition.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
