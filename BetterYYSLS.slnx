@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="BetterYYSLS/BetterYYSLS.csproj" />
+  <Project Path="Fischless.GameCapture/Fischless.GameCapture.csproj" />
+  <Project Path="Fischless.HotkeyCapture/Fischless.HotkeyCapture.csproj" />
+  <Project Path="Fischless.KeyboardCapture/Fischless.KeyboardCapture.csproj" />
+  <Project Path="Fischless.WindowsInput/Fischless.WindowsInput.csproj" />
+</Solution>

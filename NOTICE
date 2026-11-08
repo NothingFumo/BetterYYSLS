@@ -1,0 +1,34 @@
+BetterYYSLS
+===========
+
+This project is a modified version of the BetterGI framework.
+
+Upstream project
+----------------
+better-genshin-impact
+https://github.com/babalae/better-genshin-impact
+License: GNU General Public License v3.0
+
+Modifications
+-------------
+- Removed game-specific features, recognition assets and related pages.
+- Retained only the framework: window capture, input simulation, recognition
+  primitives, mask window, trigger dispatcher, configuration and four pages.
+- Renamed the project and namespaces to BetterYYSLS.
+- Replaced the logo and banner assets.
+- Retargeted the main project to .NET 10.
+- Removed the original Git history and started a new repository history.
+
+Third-party subprojects
+-----------------------
+Fischless.GameCapture, Fischless.HotkeyCapture, Fischless.KeyboardCapture and
+Fischless.WindowsInput are distributed as part of the BetterGI framework.
+Their own license files, where present (for example
+Fischless.WindowsInput/LICENSE.txt), are retained.
+
+The original copyright notices and the GNU General Public License v3.0 remain
+in effect. See LICENSE for the full license text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
