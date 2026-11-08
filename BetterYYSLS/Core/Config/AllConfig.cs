@@ -60,6 +60,11 @@ public partial class AllConfig : ObservableObject
     public GameStartConfig GameStartConfig { get; set; } = new();
 
     /// <summary>
+    ///     自动剧情配置
+    /// </summary>
+    public AutoSkipConfig AutoSkipConfig { get; set; } = new();
+
+    /// <summary>
     ///     示例触发器配置
     /// </summary>
     public SampleTriggerConfig SampleTriggerConfig { get; set; } = new();
@@ -89,6 +94,7 @@ public partial class AllConfig : ObservableObject
         MaskWindowConfig.PropertyChanged += OnAnyPropertyChanged;
         CommonConfig.PropertyChanged += OnAnyPropertyChanged;
         GameStartConfig.PropertyChanged += OnAnyPropertyChanged;
+        AutoSkipConfig.PropertyChanged += OnAnyPropertyChanged;
         SampleTriggerConfig.PropertyChanged += OnAnyPropertyChanged;
         PlaceholderTriggerConfig.PropertyChanged += OnAnyPropertyChanged;
         HotKeyConfig.PropertyChanged += OnAnyPropertyChanged;

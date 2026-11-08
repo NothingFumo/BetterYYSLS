@@ -66,6 +66,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="GameTask\AutoSkip\Assets\**\*.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Folder Include="User\" />
 	</ItemGroup>
 
