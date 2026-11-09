@@ -1,3 +1,5 @@
+using BetterYYSLS.GameTask.Common;
+
 namespace BetterYYSLS.GameTask;
 
 /// <summary>
@@ -28,6 +30,11 @@ public interface ITaskTrigger
     /// 当前是否处于独占模式
     /// </summary>
     bool IsExclusive { get; }
+
+    /// <summary>
+    /// 触发器适用的界面类型。Unknown 表示不限制。
+    /// </summary>
+    GameUiCategory SupportedGameUiCategory => GameUiCategory.Unknown;
 
     /// <summary>
     /// 初始化

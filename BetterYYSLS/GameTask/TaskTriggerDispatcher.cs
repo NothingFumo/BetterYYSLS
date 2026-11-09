@@ -1,6 +1,7 @@
 using BetterYYSLS.Core.Config;
 using BetterYYSLS.Core.Input;
 using BetterYYSLS.Core.Input.Backends.Win32;
+using BetterYYSLS.GameTask.Common;
 using BetterYYSLS.GameTask.Model;
 using BetterYYSLS.GameTask.Model.Enum;
 using BetterYYSLS.Helpers;
@@ -37,6 +38,9 @@ namespace BetterYYSLS.GameTask
 
         private RECT _gameRect = RECT.Empty;
         private bool _prevGameActive;
+
+        /// <summary>上一帧的界面类型，用于变化时记录日志</summary>
+        private GameUiCategory _lastUiCategory = GameUiCategory.Unknown;
 
         private DateTime _prevManualGc = DateTime.MinValue;
 
@@ -273,9 +277,19 @@ namespace BetterYYSLS.GameTask
                     return;
                 }
 
-                // 循环执行所有触发器 有独占状态的触发器的时候只执行独占触发器
+                // 先判断当前界面类型，再只执行适用该类型的触发器
                 var content = new CaptureContent(bitmap, _frameIndex, _timer.Interval);
-                var exclusiveTrigger = _triggers.FirstOrDefault(t => t is { IsEnabled: true, IsExclusive: true });
+                var uiCategory = GameUiState.WhichGameUi(content.CaptureRectArea);
+                content.CurrentGameUiCategory = uiCategory;
+                if (uiCategory != _lastUiCategory)
+                {
+                    _logger.LogDebug("当前界面类型：{UiCategory}", uiCategory);
+                    _lastUiCategory = uiCategory;
+                }
+
+                // 循环执行所有触发器 有独占状态的触发器的时候只执行独占触发器
+                var exclusiveTrigger = _triggers.FirstOrDefault(
+                    t => t is { IsEnabled: true, IsExclusive: true } && ShouldRun(t, uiCategory));
                 if (exclusiveTrigger != null)
                 {
                     exclusiveTrigger.OnCapture(content);
@@ -283,7 +297,8 @@ namespace BetterYYSLS.GameTask
                 }
                 else
                 {
-                    foreach (var trigger in _triggers.Where(trigger => trigger.IsEnabled))
+                    foreach (var trigger in _triggers.Where(
+                                 trigger => trigger.IsEnabled && ShouldRun(trigger, uiCategory)))
                     {
                         trigger.OnCapture(content);
                         speedTimer.Record(trigger.Name);
@@ -306,6 +321,15 @@ namespace BetterYYSLS.GameTask
                     Monitor.Exit(_locker);
                 }
             }
+        }
+
+        /// <summary>
+        /// 触发器是否适用于当前界面。Unknown 表示不限制。
+        /// </summary>
+        private static bool ShouldRun(ITaskTrigger trigger, GameUiCategory uiCategory)
+        {
+            return trigger.SupportedGameUiCategory == GameUiCategory.Unknown
+                   || trigger.SupportedGameUiCategory == uiCategory;
         }
 
         /// <summary>

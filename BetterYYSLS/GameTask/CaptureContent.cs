@@ -1,3 +1,4 @@
+using BetterYYSLS.GameTask.Common;
 using BetterYYSLS.GameTask.Model.Area;
 using System;
 using System.Drawing;
@@ -18,6 +19,9 @@ public class CaptureContent : IDisposable
     public int FrameRate => (int)(1000 / TimerInterval);
 
     public ImageRegion CaptureRectArea { get; private set; }
+
+    /// <summary>当前帧的界面类型，由调度器填充</summary>
+    public GameUiCategory CurrentGameUiCategory { get; set; } = GameUiCategory.Unknown;
 
     public CaptureContent(Bitmap srcBitmap, int frameIndex, double interval)
     {
