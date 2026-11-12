@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="BetterYYSLS/BetterYYSLS.csproj" />
+  <Project Path="BetterYYSLS.UnitTest/BetterYYSLS.UnitTest.csproj" />
   <Project Path="Fischless.GameCapture/Fischless.GameCapture.csproj" />
   <Project Path="Fischless.HotkeyCapture/Fischless.HotkeyCapture.csproj" />
   <Project Path="Fischless.KeyboardCapture/Fischless.KeyboardCapture.csproj" />
