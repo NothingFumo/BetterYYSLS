@@ -1,0 +1,340 @@
+[
+  {
+    "layerId": "1",
+    "mapSubType": "5",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20261106/101616-hdquin2rb6.png",
+    "worldA": {
+      "x": -8479.32,
+      "y": 2185.66
+    },
+    "worldB": {
+      "x": -12097.18,
+      "y": 5879.18
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-yqnrwal4hb.png",
+    "worldA": {
+      "x": -1754.46875,
+      "y": -3253.83435
+    },
+    "worldB": {
+      "x": -2023.203125,
+      "y": -2985.099975
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-iop15kly27.png",
+    "worldA": {
+      "x": -1794.828125,
+      "y": -3025.45935
+    },
+    "worldB": {
+      "x": -2158.0625,
+      "y": -2662.224975
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-u5m03nqcyt.png",
+    "worldA": {
+      "x": -1318.390625,
+      "y": -3006.756225
+    },
+    "worldB": {
+      "x": -1910.0,
+      "y": -2415.14685
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211545-4alwovs8dp.png",
+    "worldA": {
+      "x": -966.96875,
+      "y": -2378.724975
+    },
+    "worldB": {
+      "x": -1179.59375,
+      "y": -2166.099975
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211547-23hs0jfutg.png",
+    "worldA": {
+      "x": -840.481875,
+      "y": -2858.431225
+    },
+    "worldB": {
+      "x": -1149.575625,
+      "y": -2549.337475
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211545-64s8zatvqu.png",
+    "worldA": {
+      "x": -105.265625,
+      "y": -3035.012475
+    },
+    "worldB": {
+      "x": -704.75,
+      "y": -2435.5281
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-y7oksstz9f.png",
+    "worldA": {
+      "x": -641.140625,
+      "y": -3118.974975
+    },
+    "worldB": {
+      "x": -852.78125,
+      "y": -2907.33435
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-0unvlkepjr.png",
+    "worldA": {
+      "x": -1116.59375,
+      "y": -3651.52185
+    },
+    "worldB": {
+      "x": -1566.453125,
+      "y": -3201.662475
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-stinyf6w4p.png",
+    "worldA": {
+      "x": 1179.953125,
+      "y": -2403.33435
+    },
+    "worldB": {
+      "x": 854.125,
+      "y": -2107.037475
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211543-zocdptsivs.png",
+    "worldA": {
+      "x": 1460.5,
+      "y": -2053.881225
+    },
+    "worldB": {
+      "x": 1092.34375,
+      "y": -1706.39685
+    }
+  },
+  {
+    "layerId": "1",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/reunionpub/100_20251125_19aba342afc835968.png",
+    "worldA": {
+      "x": 527.1156,
+      "y": -1170.109375
+    },
+    "worldB": {
+      "x": -247.587525,
+      "y": -548.96875
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-g5ncp1hrdi.png",
+    "worldA": {
+      "x": -1754.46875,
+      "y": -3253.83435
+    },
+    "worldB": {
+      "x": -2023.203125,
+      "y": -2985.099975
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211546-7sfhipjl68.png",
+    "worldA": {
+      "x": -966.96875,
+      "y": -2378.724975
+    },
+    "worldB": {
+      "x": -1179.59375,
+      "y": -2166.099975
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211547-96inetzkc3.png",
+    "worldA": {
+      "x": -840.481875,
+      "y": -2858.431225
+    },
+    "worldB": {
+      "x": -1149.575625,
+      "y": -2549.337475
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211545-cdpnyqewra.png",
+    "worldA": {
+      "x": -242.09375,
+      "y": -3027.137475
+    },
+    "worldB": {
+      "x": -623.0625,
+      "y": -2647.168725
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-he0iw87963.png",
+    "worldA": {
+      "x": -604.71875,
+      "y": -3201.662475
+    },
+    "worldB": {
+      "x": -860.65625,
+      "y": -2945.724975
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211536-sochysw985.png",
+    "worldA": {
+      "x": -1116.59375,
+      "y": -3651.52185
+    },
+    "worldB": {
+      "x": -1566.453125,
+      "y": -3201.662475
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-hl8mzo07wb.png",
+    "worldA": {
+      "x": 1179.953125,
+      "y": -2403.33435
+    },
+    "worldB": {
+      "x": 854.125,
+      "y": -2107.037475
+    }
+  },
+  {
+    "layerId": "2",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211543-s3i2v9tse0.png",
+    "worldA": {
+      "x": 1460.5,
+      "y": -2053.881225
+    },
+    "worldB": {
+      "x": 1092.34375,
+      "y": -1706.39685
+    }
+  },
+  {
+    "layerId": "3",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211545-adsfuje8ok.png",
+    "worldA": {
+      "x": -1754.46875,
+      "y": -3253.83435
+    },
+    "worldB": {
+      "x": -2023.203125,
+      "y": -2985.099975
+    }
+  },
+  {
+    "layerId": "3",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211546-4cgmjsah05.png",
+    "worldA": {
+      "x": -966.96875,
+      "y": -2378.724975
+    },
+    "worldB": {
+      "x": -1179.59375,
+      "y": -2166.099975
+    }
+  },
+  {
+    "layerId": "3",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-fiyaews09n.png",
+    "worldA": {
+      "x": 1179.953125,
+      "y": -2403.33435
+    },
+    "worldB": {
+      "x": 854.125,
+      "y": -2107.037475
+    }
+  },
+  {
+    "layerId": "3",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211543-ho17dgnj3w.png",
+    "worldA": {
+      "x": 1460.5,
+      "y": -2053.881225
+    },
+    "worldB": {
+      "x": 1092.34375,
+      "y": -1706.39685
+    }
+  },
+  {
+    "layerId": "4",
+    "mapSubType": "1",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250225/211544-eg14rl6pss.png",
+    "worldA": {
+      "x": 1179.953125,
+      "y": -2403.33435
+    },
+    "worldB": {
+      "x": 854.125,
+      "y": -2107.037475
+    }
+  },
+  {
+    "layerId": "99",
+    "mapSubType": "2",
+    "imageUrl": "https://img.166.net/gameyw-misc/opd/squash/20250620/101541-8saghvslyu.png",
+    "worldA": {
+      "x": -401.451715,
+      "y": 215.118958
+    },
+    "worldB": {
+      "x": -3408.455591,
+      "y": 2678.036154
+    }
+  }
+]

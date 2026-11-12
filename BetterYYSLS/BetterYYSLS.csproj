@@ -22,7 +22,18 @@
 	<ItemGroup>
 		<Resource Include="Assets\*.jpg" />
 		<Resource Include="Assets\*.png" />
+		<Resource Include="Assets\Map\*.png" />
+		<Resource Include="Assets\Map\Categories\*.png" />
 		<Resource Include="Assets\*.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Assets\Map\snapshot.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\Map\layer-overlays.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -41,11 +52,13 @@
 		<PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
 		<PackageReference Include="Serilog.Sinks.RichTextBox.Wpf" Version="1.1.0" />
+		<PackageReference Include="Vanara.PInvoke.CoreAudio" Version="3.4.17" />
 		<PackageReference Include="Vanara.PInvoke.NtDll" Version="3.4.17" />
 		<PackageReference Include="Vanara.PInvoke.SHCore" Version="3.4.17" />
 		<PackageReference Include="Vanara.PInvoke.User32" Version="3.4.17" />
 		<PackageReference Include="WPF-UI" Version="3.0.0-preview.7" />
 		<PackageReference Include="WPF-UI.Tray" Version="3.0.0-preview.7" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -77,6 +90,9 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Assets\Model\PaddleOCR\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Assets\Model\Vad\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
