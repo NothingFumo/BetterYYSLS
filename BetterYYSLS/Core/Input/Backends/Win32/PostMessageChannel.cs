@@ -91,7 +91,13 @@ internal sealed class PostMessageChannel : InputChannelBase
             (int)(absY * screen.Height / 65535d));
     }
 
-    protected override void OnScroll(int clicks) => WarnUnsupported("后台滚轮 VerticalScroll");
+    protected override void OnScroll(int clicks)
+    {
+        if (TryPrepare("鼠标滚轮"))
+        {
+            _simulator!.VerticalScrollBackground(clicks, _pointer.X, _pointer.Y);
+        }
+    }
 
     /// <summary>
     /// 检查是否绑定了窗口；游戏不在前台时补发 WM_ACTIVATE

@@ -232,7 +232,12 @@ namespace BetterYYSLS.GameTask
                 }
                 else
                 {
-                    if (!_prevGameActive)
+                    var maskEnabled = TaskContext.Instance().Config.MaskWindowConfig.MaskEnabled;
+                    if (!maskEnabled)
+                    {
+                        maskWindow.Invoke(() => maskWindow.Hide());
+                    }
+                    else if (!_prevGameActive)
                     {
                         maskWindow.Invoke(() =>
                         {

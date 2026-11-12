@@ -18,6 +18,7 @@ public class PostMessageSimulator
 
     public static readonly uint WM_RBUTTONDOWN = 0x204;
     public static readonly uint WM_RBUTTONUP = 0x205;
+    public static readonly uint WM_MOUSEWHEEL = 0x20A;
 
     private readonly IntPtr _hWnd;
 
@@ -46,6 +47,18 @@ public class PostMessageSimulator
         User32.PostMessage(_hWnd, WM_LBUTTONDOWN, IntPtr.Zero, p);
         Thread.Sleep(100);
         User32.PostMessage(_hWnd, WM_LBUTTONUP, IntPtr.Zero, p);
+        return this;
+    }
+
+    /// <summary>
+    /// 后台发送鼠标滚轮。正数向上，负数向下。
+    /// </summary>
+    public PostMessageSimulator VerticalScrollBackground(int clicks, int x, int y)
+    {
+        var delta = clicks * 120;
+        var wParam = (nint)((delta & 0xFFFF) << 16);
+        var lParam = (nint)((y << 16) | (x & 0xFFFF));
+        User32.PostMessage(_hWnd, WM_MOUSEWHEEL, wParam, lParam);
         return this;
     }
 
