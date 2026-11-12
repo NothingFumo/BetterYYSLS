@@ -103,8 +103,73 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" Text="随机选择选项" VerticalAlignment="Center" />
+                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.SelectRandomOption, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <ui:TextBlock Grid.Column="0" Text="选项序号（-1 不指定）" VerticalAlignment="Center" />
                     <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.OptionSelectIndex, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0"
+                                  Text="选项前等待剧情语音结束（Silero VAD）"
+                                  VerticalAlignment="Center" />
+                    <ui:ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding Config.AutoSkipConfig.AutoWaitDialogueOptionVoiceEnabled, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" Text="语音最长等待（秒）" VerticalAlignment="Center" />
+                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.DialogueOptionVoiceMaxWaitSeconds, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" Text="选项前额外延迟（毫秒）" VerticalAlignment="Center" />
+                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.AfterChooseOptionSleepDelay, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0"
+                                  Text="优先选项关键词（换行/分号分隔）"
+                                  VerticalAlignment="Center" />
+                    <ui:TextBox Grid.Column="1"
+                                Width="260"
+                                Height="56"
+                                AcceptsReturn="True"
+                                Text="{Binding Config.AutoSkipConfig.OptionPriorityKeywords, Mode=TwoWay}"
+                                TextWrapping="Wrap" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0"
+                                  Text="不自动选择的选项关键词"
+                                  VerticalAlignment="Center" />
+                    <ui:TextBox Grid.Column="1"
+                                Width="260"
+                                Height="56"
+                                AcceptsReturn="True"
+                                Text="{Binding Config.AutoSkipConfig.OptionPauseKeywords, Mode=TwoWay}"
+                                TextWrapping="Wrap" />
                 </Grid>
                 <Grid Margin="0,4">
                     <Grid.ColumnDefinitions>
@@ -121,6 +186,22 @@
                     </Grid.ColumnDefinitions>
                     <ui:TextBlock Grid.Column="0" Text="选项列表滚轮间隔（毫秒）" VerticalAlignment="Center" />
                     <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.OptionScrollStepMs, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" Text="游戏失焦时后台运行剧情" VerticalAlignment="Center" />
+                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.RunBackgroundEnabled, Mode=TwoWay}" />
+                </Grid>
+                <Grid Margin="0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" Text="后台剧情结束后切回游戏前台" VerticalAlignment="Center" />
+                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.BringGameToFrontAfterBackgroundDialogEnabled, Mode=TwoWay}" />
                 </Grid>
                 <Grid Margin="0,4">
                     <Grid.ColumnDefinitions>

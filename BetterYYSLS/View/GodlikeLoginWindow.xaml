@@ -1,0 +1,72 @@
+<Window x:Class="BetterYYSLS.View.GodlikeLoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Godlike 扫码登录"
+        Width="380"
+        Height="500"
+        MinWidth="340"
+        MinHeight="460"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="Microsoft YaHei UI"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None">
+    <Grid Margin="10">
+        <Border Background="#F21A1C22"
+                BorderBrush="#40FFFFFF"
+                BorderThickness="1"
+                CornerRadius="10">
+            <Grid Margin="22">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel MouseLeftButtonDown="OnHeaderMouseLeftButtonDown">
+                    <TextBlock FontSize="17"
+                               FontWeight="SemiBold"
+                               Foreground="#F3F3F3"
+                               Text="Godlike 扫码登录" />
+                    <TextBlock Margin="0,4,0,0"
+                               FontSize="11"
+                               Foreground="#AAB0B8"
+                               Text="使用大神 APP 扫描二维码" />
+                </StackPanel>
+
+                <Border Grid.Row="1"
+                        Width="220"
+                        Height="220"
+                        Margin="0,18"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#FFFFFFFF"
+                        CornerRadius="8">
+                    <Image Source="{Binding QrImage}" Stretch="Uniform" />
+                </Border>
+
+                <TextBlock Grid.Row="2"
+                           Margin="0,0,0,12"
+                           FontSize="11"
+                           Foreground="#AAB0B8"
+                           Text="{Binding Status}"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+
+                <StackPanel Grid.Row="3">
+                    <Button Command="{Binding RefreshQrCodeCommand}"
+                            Content="刷新二维码"
+                            Margin="0,0,0,8" />
+                    <Button Command="{Binding OpenOfficialClientCommand}"
+                            Content="启动官方客户端完成原生登录"
+                            Margin="0,0,0,8" />
+                    <Button Click="OnCloseClick" Content="关闭" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

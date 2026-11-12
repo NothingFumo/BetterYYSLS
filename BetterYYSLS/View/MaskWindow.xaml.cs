@@ -1,11 +1,14 @@
+using BetterYYSLS.Core.Config;
 using BetterYYSLS.Core.Recognition.OpenCv;
 using BetterYYSLS.GameTask;
 using BetterYYSLS.Helpers;
 using BetterYYSLS.Helpers.DpiAwareness;
 using BetterYYSLS.View.Drawable;
+using BetterYYSLS.ViewModel;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -28,6 +31,9 @@ public partial class MaskWindow : Window
 {
     private static MaskWindow? _maskWindow;
 
+    private MaskWindowViewModel? _viewModel;
+    private MaskWindowConfig? _maskConfig;
+
     private static readonly Typeface MyTypeface = new FontFamily("Microsoft Yahei UI").GetTypefaces().First();
 
     static MaskWindow()
@@ -49,6 +55,16 @@ public partial class MaskWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        if (_maskConfig is not null)
+        {
+            _maskConfig.PropertyChanged -= OnMaskConfigPropertyChanged;
+        }
+
         base.OnClosed(e);
         IsClosed = true;
     }
@@ -74,8 +90,14 @@ public partial class MaskWindow : Window
             Width = currentRect.Width / dpiScale;
             Height = currentRect.Height / dpiScale;
 
-            Canvas.SetTop(LogTextBoxWrapper, Height - LogTextBoxWrapper.Height - 65);
-            Canvas.SetTop(StatusWrapper, Height - LogTextBoxWrapper.Height - 90);
+            // 按游戏窗口尺寸调整遮罩内容，避免窗口变小时控件跑出屏幕。
+            var contentWidth = Math.Max(240, Width - 40);
+            var logHeight = Math.Clamp(Height * 0.22, 120, 280);
+            LogTextBoxWrapper.Width = contentWidth;
+            LogTextBoxWrapper.Height = logHeight;
+            StatusWrapper.Width = contentWidth;
+            Canvas.SetTop(LogTextBoxWrapper, Height - logHeight - 65);
+            Canvas.SetTop(StatusWrapper, Height - logHeight - 90);
         });
         // 重新计算控件位置
         // shit code 预定了
@@ -88,15 +110,80 @@ public partial class MaskWindow : Window
         this.SetResourceReference(StyleProperty, typeof(MaskWindow));
         InitializeComponent();
         this.InitializeDpiAwareness();
+        _viewModel = DataContext as MaskWindowViewModel;
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
 
+        Loaded += OnMaskWindowLoaded;
         LogTextBox.TextChanged += LogTextBoxTextChanged;
         //AddAreaSettingsControl("测试识别窗口");
     }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
-        base.OnSourceInitialized(e);
+        // 先设置基础窗口样式，再让 SourceInitialized 事件中的点击穿透行为覆盖最终状态。
         this.SetLayeredWindow();
+        this.HideFromAltTab();
+        base.OnSourceInitialized(e);
+    }
+
+    /// <summary>
+    /// 配置就绪后监听遮罩显示开关；配置可能在窗口 Loaded 之后才完成初始化。
+    /// </summary>
+    private void OnMaskWindowLoaded(object sender, RoutedEventArgs e)
+    {
+        AttachMaskConfig();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MaskWindowViewModel.Config))
+        {
+            AttachMaskConfig();
+        }
+    }
+
+    private void AttachMaskConfig()
+    {
+        var config = _viewModel?.Config?.MaskWindowConfig;
+        if (ReferenceEquals(config, _maskConfig))
+        {
+            return;
+        }
+
+        if (_maskConfig is not null)
+        {
+            _maskConfig.PropertyChanged -= OnMaskConfigPropertyChanged;
+        }
+
+        _maskConfig = config;
+        if (_maskConfig is not null)
+        {
+            _maskConfig.PropertyChanged += OnMaskConfigPropertyChanged;
+            if (!_maskConfig.MaskEnabled)
+            {
+                Hide();
+            }
+        }
+    }
+
+    private void OnMaskConfigPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MaskWindowConfig.MaskEnabled) || _maskConfig is null)
+        {
+            return;
+        }
+
+        if (!_maskConfig.MaskEnabled)
+        {
+            Hide();
+        }
+        else if (SystemControl.IsGameActive())
+        {
+            Show();
+        }
     }
 
     private void LogTextBoxTextChanged(object sender, TextChangedEventArgs e)
@@ -185,6 +272,17 @@ public partial class MaskWindow : Window
 
 file static class MaskWindowExtension
 {
+    /// <summary>
+    /// 从 Alt+Tab 列表中隐藏遮罩窗口。
+    /// </summary>
+    public static void HideFromAltTab(this Window window)
+    {
+        var hWnd = new WindowInteropHelper(window).Handle;
+        var style = User32.GetWindowLong(hWnd, User32.WindowLongFlags.GWL_EXSTYLE);
+        style |= (int)User32.WindowStylesEx.WS_EX_TOOLWINDOW;
+        _ = User32.SetWindowLong(hWnd, User32.WindowLongFlags.GWL_EXSTYLE, style);
+    }
+
     public static void SetLayeredWindow(this Window window, bool isLayered = true)
     {
         SetLayeredWindow(new WindowInteropHelper(window).Handle, isLayered);

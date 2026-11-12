@@ -46,16 +46,64 @@ public partial class AutoSkipConfig : ObservableObject
     private bool _selectFirstOption = true;
 
     /// <summary>
+    /// 选择选项前通过游戏进程音频的 Silero VAD 等待语音结束。
+    /// </summary>
+    [ObservableProperty]
+    private bool _autoWaitDialogueOptionVoiceEnabled = false;
+
+    /// <summary>
+    /// 语音检测最长等待秒数。
+    /// </summary>
+    [ObservableProperty]
+    private int _dialogueOptionVoiceMaxWaitSeconds = 30;
+
+    /// <summary>
+    /// 选项等待结束后的额外延迟（毫秒），也作为 VAD 不可用时的回退延迟。
+    /// </summary>
+    [ObservableProperty]
+    private int _afterChooseOptionSleepDelay = 0;
+
+    /// <summary>
     /// 选择最后一项；关闭时按 <see cref="OptionSelectIndex"/> 选择
     /// </summary>
     [ObservableProperty]
     private bool _selectLastOption;
 
     /// <summary>
+    /// 随机选择已有选项。
+    /// </summary>
+    [ObservableProperty]
+    private bool _selectRandomOption;
+
+    /// <summary>
+    /// 游戏失焦时使用后台输入继续剧情。
+    /// </summary>
+    [ObservableProperty]
+    private bool _runBackgroundEnabled = true;
+
+    /// <summary>
+    /// 后台剧情结束后自动切回游戏前台。
+    /// </summary>
+    [ObservableProperty]
+    private bool _bringGameToFrontAfterBackgroundDialogEnabled = true;
+
+    /// <summary>
     /// 指定选项序号（从 0 开始，-1 表示不指定）
     /// </summary>
     [ObservableProperty]
     private int _optionSelectIndex = -1;
+
+    /// <summary>
+    /// 优先选择的选项关键词，换行、逗号或分号分隔；命中后优先点击。
+    /// </summary>
+    [ObservableProperty]
+    private string _optionPriorityKeywords = string.Empty;
+
+    /// <summary>
+    /// 不自动选择的选项关键词，换行、逗号或分号分隔。
+    /// </summary>
+    [ObservableProperty]
+    private string _optionPauseKeywords = string.Empty;
 
     /// <summary>
     /// 列表最多滚动格数，用于滚到顶部或底部

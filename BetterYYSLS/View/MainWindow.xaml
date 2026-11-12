@@ -69,6 +69,14 @@
                         <ui:SymbolIcon Symbol="Flash24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
+
+                <ui:NavigationViewItem Content="大地图"
+                                       NavigationCacheMode="Enabled"
+                                       TargetPageType="{x:Type pages:MapPage}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="Map24" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
                 
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>

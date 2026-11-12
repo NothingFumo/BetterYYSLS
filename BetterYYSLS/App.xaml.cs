@@ -57,11 +57,9 @@ public partial class App : Application
                     .MinimumLevel.Debug()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                     .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Warning);
-                if (all.MaskWindowConfig.MaskEnabled)
-                {
-                    loggerConfiguration.WriteTo.RichTextBox(maskWindow.LogBox, LogEventLevel.Information,
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
-                }
+                // 始终绑定日志目标，遮罩关闭后再开启时仍能立即看到历史日志。
+                loggerConfiguration.WriteTo.RichTextBox(maskWindow.LogBox, LogEventLevel.Information,
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
 
                 Log.Logger = loggerConfiguration.CreateLogger();
                 services.AddLogging(c => c.AddSerilog());
@@ -75,11 +73,18 @@ public partial class App : Application
                 services.AddView<INavigationWindow, MainWindow, MainWindowViewModel>();
                 services.AddSingleton<NotifyIconViewModel>();
 
+                // 大地图窗口
+                services.AddSingleton<MapWindowViewModel>();
+                services.AddSingleton<MapWindow>();
+                services.AddSingleton<GodlikeLoginWindowViewModel>();
+                services.AddSingleton<GodlikeLoginWindow>();
+
                 // 页面
                 services.AddView<HomePage, HomePageViewModel>();
                 services.AddView<TriggerSettingsPage, TriggerSettingsPageViewModel>();
                 services.AddView<HotKeyPage, HotKeyPageViewModel>();
                 services.AddView<CommonSettingsPage, CommonSettingsPageViewModel>();
+                services.AddView<MapPage, MapPageViewModel>();
 
                 // 实时触发器调度器
                 services.AddSingleton<TaskTriggerDispatcher>();

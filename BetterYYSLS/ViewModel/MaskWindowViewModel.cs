@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.Mvvm.Messaging.Messages;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 
@@ -28,6 +29,11 @@ namespace BetterYYSLS.ViewModel
         /// 配置根
         /// </summary>
         public AllConfig? Config { get; set; }
+
+        /// <summary>
+        /// 遮罩控件锁定后窗口鼠标穿透，避免挡住游戏操作。
+        /// </summary>
+        public bool IsClickThrough => Config?.MaskWindowConfig.ControlLocked ?? true;
 
         /// <summary>
         /// 创建遮罩窗口 ViewModel 并订阅遮罩消息
@@ -101,6 +107,7 @@ namespace BetterYYSLS.ViewModel
             if (Config != null)
             {
                 OnPropertyChanged(nameof(Config));
+                OnPropertyChanged(nameof(IsClickThrough));
             }
         }
 
@@ -115,7 +122,23 @@ namespace BetterYYSLS.ViewModel
                 if (configService != null)
                 {
                     Config = configService.Get();
+                    if (Config != null)
+                    {
+                        Config.MaskWindowConfig.PropertyChanged -= OnMaskWindowConfigPropertyChanged;
+                        Config.MaskWindowConfig.PropertyChanged += OnMaskWindowConfigPropertyChanged;
+                    }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 配置变化时同步点击穿透状态。
+        /// </summary>
+        private void OnMaskWindowConfigPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MaskWindowConfig.ControlLocked))
+            {
+                OnPropertyChanged(nameof(IsClickThrough));
             }
         }
     }

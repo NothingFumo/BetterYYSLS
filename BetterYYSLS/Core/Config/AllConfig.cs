@@ -65,6 +65,11 @@ public partial class AllConfig : ObservableObject
     public AutoSkipConfig AutoSkipConfig { get; set; } = new();
 
     /// <summary>
+    ///     大地图窗口配置
+    /// </summary>
+    public MapWindowConfig MapWindowConfig { get; set; } = new();
+
+    /// <summary>
     ///     示例触发器配置
     /// </summary>
     public SampleTriggerConfig SampleTriggerConfig { get; set; } = new();
@@ -95,6 +100,7 @@ public partial class AllConfig : ObservableObject
         CommonConfig.PropertyChanged += OnAnyPropertyChanged;
         GameStartConfig.PropertyChanged += OnAnyPropertyChanged;
         AutoSkipConfig.PropertyChanged += OnAnyPropertyChanged;
+        MapWindowConfig.PropertyChanged += OnAnyPropertyChanged;
         SampleTriggerConfig.PropertyChanged += OnAnyPropertyChanged;
         PlaceholderTriggerConfig.PropertyChanged += OnAnyPropertyChanged;
         HotKeyConfig.PropertyChanged += OnAnyPropertyChanged;

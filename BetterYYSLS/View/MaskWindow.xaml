@@ -3,12 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:behavior="clr-namespace:BetterYYSLS.View.Behavior"
         xmlns:viewModel="clr-namespace:BetterYYSLS.ViewModel"
         Title="MaskWindow"
         Width="500"
         Height="800"
         AllowsTransparency="True"
         FontFamily="{DynamicResource TextThemeFontFamily}"
+        Focusable="False"
+        ResizeMode="NoResize"
+        ShowActivated="False"
         ShowInTaskbar="False"
         Topmost="True"
         WindowStyle="None">
@@ -20,6 +24,10 @@
             <b:InvokeCommandAction Command="{Binding LoadedCommand}" CommandParameter="{Binding}" />
         </b:EventTrigger>
     </b:Interaction.Triggers>
+
+    <b:Interaction.Behaviors>
+        <behavior:WindowClickThroughBehavior IsClickThrough="{Binding IsClickThrough}" />
+    </b:Interaction.Behaviors>
 
     <Window.Background>
         <SolidColorBrush Opacity="0" Color="#FFB0B0B0" />
