@@ -33,3 +33,11 @@ node_modules/
 /User/
 log/
 *.log
+
+# Installer output
+/dist/
+
+# Python
+__pycache__/
+/docs/
+/CONTEXT.md
