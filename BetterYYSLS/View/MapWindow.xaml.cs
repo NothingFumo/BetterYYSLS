@@ -29,6 +29,16 @@ public partial class MapWindow : Window
     private const uint SwpNoMove = 0x0002;
     private const uint SwpNoActivate = 0x0010;
     private const uint MonitorDefaultToNearest = 0x00000002;
+    private const int WmNchittest = 0x0084;
+    private const int ResizeBorder = 8;
+    private const int HtLeft = 10;
+    private const int HtRight = 11;
+    private const int HtTop = 12;
+    private const int HtTopLeft = 13;
+    private const int HtTopRight = 14;
+    private const int HtBottom = 15;
+    private const int HtBottomLeft = 16;
+    private const int HtBottomRight = 17;
 
     private readonly MapWindowViewModel _viewModel;
     private readonly DispatcherTimer _followTimer;
@@ -364,6 +374,57 @@ public partial class MapWindow : Window
                 _followTimer.Stop();
             }
         }
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        if (PresentationSource.FromVisual(this) is HwndSource source)
+        {
+            source.AddHook(WndProc);
+        }
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg != WmNchittest || _fullScreenApplied || WindowState != WindowState.Normal)
+        {
+            return IntPtr.Zero;
+        }
+
+        var screenX = unchecked((short)(long)lParam);
+        var screenY = unchecked((short)((long)lParam >> 16));
+        var point = RootLayout.PointFromScreen(new Point(screenX, screenY));
+        var width = RootLayout.ActualWidth;
+        var height = RootLayout.ActualHeight;
+        if (point.X < 0 || point.Y < 0 || point.X > width || point.Y > height)
+        {
+            return IntPtr.Zero;
+        }
+
+        var left = point.X <= ResizeBorder;
+        var right = point.X >= width - ResizeBorder;
+        var top = point.Y <= ResizeBorder;
+        var bottom = point.Y >= height - ResizeBorder;
+        var hit = (left, right, top, bottom) switch
+        {
+            (true, _, true, _) => HtTopLeft,
+            (_, true, true, _) => HtTopRight,
+            (true, _, _, true) => HtBottomLeft,
+            (_, true, _, true) => HtBottomRight,
+            (true, _, _, _) => HtLeft,
+            (_, true, _, _) => HtRight,
+            (_, _, true, _) => HtTop,
+            (_, _, _, true) => HtBottom,
+            _ => 0
+        };
+        if (hit == 0)
+        {
+            return IntPtr.Zero;
+        }
+
+        handled = true;
+        return new IntPtr(hit);
     }
 
     /// <summary>
