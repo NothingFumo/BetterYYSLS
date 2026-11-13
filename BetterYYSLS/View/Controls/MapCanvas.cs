@@ -613,6 +613,7 @@ public sealed class MapCanvas : FrameworkElement
             return;
         }
 
+        drawingContext.PushOpacity(Math.Clamp(BaseOpacity, 0d, 1d));
         foreach (var overlay in layer.Overlays)
         {
             if (string.IsNullOrWhiteSpace(overlay.ImageUrl))
@@ -647,6 +648,8 @@ public sealed class MapCanvas : FrameworkElement
 
             drawingContext.DrawImage(image, new Rect(left, top, width, height));
         }
+
+        drawingContext.Pop();
     }
 
     private MapLayer? GetSelectedLayer()
