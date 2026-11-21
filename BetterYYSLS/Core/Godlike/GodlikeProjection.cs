@@ -64,6 +64,21 @@ public sealed record GodlikeProjectionConfig(
 public static class GodlikeProjection
 {
     /// <summary>
+    /// 官方坐标切换：河西旧坐标需要先加区域偏移，再解析区域并投影到地图。
+    /// 该偏移只由坐标范围决定，与当前选中的地图区域无关。
+    /// </summary>
+    public static MapPoint NormalizeWorldLocation(double worldX, double worldY)
+    {
+        if (worldY >= 6091.845703125 && worldY <= 8365.1640625 &&
+            worldX >= -8857.505859375 && worldX <= -5504.01025390625)
+        {
+            return new MapPoint(worldX + 3427.4, worldY - 3781.5);
+        }
+
+        return new MapPoint(worldX, worldY);
+    }
+
+    /// <summary>
     /// 主世界瓦片模板，包含开封、河西、未央城。
     /// </summary>
     public const string MainTileUrlTemplate =

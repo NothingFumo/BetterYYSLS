@@ -44,6 +44,9 @@ public partial class MapWindowViewModel : ObservableObject
     /// <summary>从持久化配置恢复地图选项时阻止重复保存。</summary>
     private bool _restoringMapSelection;
 
+    /// <summary>上一次解析出的玩家坐标区域，用于识别跨区域切换。</summary>
+    private string? _lastPlayerSubType;
+
     /// <summary>
     /// 创建大地图窗口视图模型。
     /// </summary>
@@ -102,13 +105,73 @@ public partial class MapWindowViewModel : ObservableObject
     {
         RunOnUi(() =>
         {
-            PlayerWorldPosition = new MapPoint(location.WorldX, location.WorldY, location.WorldZ);
-            PlayerMapPosition = GodlikeProjection.WorldToMap(
-                SelectedRegion?.SubTypes.FirstOrDefault() ?? location.SubType,
+            // 官方坐标切换：先用坐标范围归一化旧河西坐标，再解析区域并投影。
+            var normalized = GodlikeProjection.NormalizeWorldLocation(
                 location.WorldX,
                 location.WorldY);
-            TryAutoSwitchToPlayerMap(location.WorldX, location.WorldY);
+            var locationSubType = ResolveLocationSubType(normalized.X, normalized.Y)
+                                  ?? location.SubType;
+            PlayerWorldPosition = new MapPoint(normalized.X, normalized.Y, location.WorldZ);
+            // 坐标投影必须使用角色实际所在地图，而不是用户当前打开的区域。
+            PlayerMapPosition = GodlikeProjection.WorldToMap(
+                locationSubType,
+                normalized.X,
+                normalized.Y);
+
+            // 首次解析或跨区域时自动切图；同区域内保留用户手动浏览的地图。
+            var regionChanged = !string.Equals(_lastPlayerSubType, locationSubType, StringComparison.Ordinal);
+            _lastPlayerSubType = locationSubType;
+            TryAutoSwitchToPlayerMap(normalized.X, normalized.Y, regionChanged);
         });
+    }
+
+    /// <summary>
+    /// 角色坐标解析用的点位半径；超出后回退到区域中心。
+    /// </summary>
+    private const double MarkerResolveRadius = 300;
+
+    /// <summary>
+    /// 按角色世界坐标选择 mapSubType。
+    /// 优先使用最近点位所属区域：河西/滹沱等坐标范围存在重叠，单看区域中心会误判。
+    /// 各区域之间没有优先级，完全由距离决定。
+    /// </summary>
+    private string? ResolveLocationSubType(double worldX, double worldY)
+    {
+        string? markerSubType = null;
+        var markerDistance = MarkerResolveRadius * MarkerResolveRadius;
+        foreach (var marker in _allMarkers)
+        {
+            if (string.IsNullOrWhiteSpace(marker.MapSubType))
+            {
+                continue;
+            }
+
+            var dx = marker.WorldPosition.X - worldX;
+            var dy = marker.WorldPosition.Y - worldY;
+            var distance = (dx * dx) + (dy * dy);
+            if (distance <= markerDistance)
+            {
+                markerDistance = distance;
+                markerSubType = marker.MapSubType;
+            }
+        }
+
+        if (markerSubType is not null)
+        {
+            return markerSubType;
+        }
+
+        // 稀疏区域没有邻近点位时，再按区域中心距离判断。
+        return RegionOptions
+            .Where(option => !string.IsNullOrWhiteSpace(option.SubType))
+            .OrderBy(option =>
+            {
+                var dx = option.WorldX - worldX;
+                var dy = option.WorldY - worldY;
+                return (dx * dx) + (dy * dy);
+            })
+            .Select(option => option.SubType)
+            .FirstOrDefault();
     }
 
     private void OnLocationStatusChanged(object? sender, string status)
@@ -1091,27 +1154,28 @@ public partial class MapWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 有角色坐标时切换到最近的一级地图；滹沱没有一级地图时尝试其子区域。
+    /// 在指定 mapSubType 内选择地图：非主世界优先一级区域，主世界按距离选子区域。
     /// </summary>
-    private void TryAutoSwitchToPlayerMap(double worldX, double worldY)
+    private MapRegionOption? FindRegionOptionForSubType(string subType, double worldX, double worldY)
     {
-        if (!IsPlayerCentered ||
-            ConfigService.Config?.MapWindowConfig.AutoSwitchToPlayerMap != true ||
-            RegionOptions.Count == 0)
-        {
-            return;
-        }
-
-        var candidates = RegionOptions
-            .Where(option => !string.IsNullOrWhiteSpace(option.SubType) &&
-                             (option.ParentName is null || option.SubType == "3"))
+        var sameType = RegionOptions
+            .Where(option => option.SubType == subType)
             .ToList();
-        if (candidates.Count == 0)
+        if (sameType.Count == 0)
         {
-            return;
+            return null;
         }
 
-        var target = candidates
+        if (subType != "1")
+        {
+            var topLevel = sameType.FirstOrDefault(option => option.ParentName is null);
+            if (topLevel is not null)
+            {
+                return topLevel;
+            }
+        }
+
+        return sameType
             .OrderBy(option =>
             {
                 var dx = option.WorldX - worldX;
@@ -1119,18 +1183,38 @@ public partial class MapWindowViewModel : ObservableObject
                 return (dx * dx) + (dy * dy);
             })
             .First();
-        if (ReferenceEquals(target, SelectedRegionOption))
+    }
+
+    /// <summary>
+    /// 有角色坐标时切换到最近的官方区域；各区域没有优先级，完全按距离选择。
+    /// 跨区域时立即切换；同区域内仅在角色居中跟随时按距离切换。
+    /// </summary>
+    private void TryAutoSwitchToPlayerMap(double worldX, double worldY, bool regionChanged)
+    {
+        if ((!IsPlayerCentered && !regionChanged) ||
+            ConfigService.Config?.MapWindowConfig.AutoSwitchToPlayerMap != true ||
+            RegionOptions.Count == 0)
         {
             return;
         }
 
-        var targetDistance = DistanceSquared(target, worldX, worldY);
-        var currentDistance = SelectedRegionOption is null
-            ? double.PositiveInfinity
-            : DistanceSquared(SelectedRegionOption, worldX, worldY);
-        if (targetDistance + 10000 >= currentDistance)
+        var subType = ResolveLocationSubType(worldX, worldY) ?? "1";
+        var target = FindRegionOptionForSubType(subType, worldX, worldY);
+        if (target is null || ReferenceEquals(target, SelectedRegionOption))
         {
             return;
+        }
+
+        if (!regionChanged)
+        {
+            var targetDistance = DistanceSquared(target, worldX, worldY);
+            var currentDistance = SelectedRegionOption is null
+                ? double.PositiveInfinity
+                : DistanceSquared(SelectedRegionOption, worldX, worldY);
+            if (targetDistance + 10000 >= currentDistance)
+            {
+                return;
+            }
         }
 
         SelectRegionOption(target, userInitiated: false);
@@ -1935,16 +2019,9 @@ public partial class MapWindowViewModel : ObservableObject
             return;
         }
 
-        // 按世界坐标找到最近的官方区域，先切换地图，再进入玩家居中跟随。
-        var target = RegionOptions
-            .Where(option => !string.IsNullOrWhiteSpace(option.SubType))
-            .OrderBy(option =>
-            {
-                var dx = option.WorldX - world.X;
-                var dy = option.WorldY - world.Y;
-                return (dx * dx) + (dy * dy);
-            })
-            .FirstOrDefault();
+        // 先用点位确定 mapSubType，再在该区域内选地图；不能只按区域中心，否则河西/滹沱会误判。
+        var subType = ResolveLocationSubType(world.X, world.Y) ?? "1";
+        var target = FindRegionOptionForSubType(subType, world.X, world.Y);
         if (target is not null && !ReferenceEquals(target, SelectedRegionOption))
         {
             SelectRegionOption(target);
@@ -2175,7 +2252,9 @@ public partial class MapWindowViewModel : ObservableObject
         _locationService.SubType = subType;
         if (PlayerWorldPosition is { } world)
         {
-            PlayerMapPosition = GodlikeProjection.WorldToMap(subType, world.X, world.Y);
+            // 玩家坐标按最近的官方区域投影，不能用正在浏览的地图配置。
+            var worldSubType = ResolveLocationSubType(world.X, world.Y) ?? subType;
+            PlayerMapPosition = GodlikeProjection.WorldToMap(worldSubType, world.X, world.Y);
         }
 
         Layers.Clear();
