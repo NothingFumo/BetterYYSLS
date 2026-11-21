@@ -28,7 +28,6 @@ internal class GameTaskManager
         TriggerDictionary = new Dictionary<string, ITaskTrigger>
         {
             ["AutoSkip"] = new AutoSkip.AutoSkipTrigger(),
-            ["QuestTracking"] = new QuestTracking.QuestTrackingTrigger(),
             ["Sample"] = new SampleTrigger(),
             ["Placeholder"] = new PlaceholderTrigger(),
         };
@@ -47,7 +46,6 @@ internal class GameTaskManager
         if (TriggerDictionary is { Count: > 0 })
         {
             TriggerDictionary["AutoSkip"].Init();
-            TriggerDictionary["QuestTracking"].Init();
             TriggerDictionary["Sample"].Init();
             TriggerDictionary["Placeholder"].Init();
             VisionContext.Instance().DrawContent.ClearAll();

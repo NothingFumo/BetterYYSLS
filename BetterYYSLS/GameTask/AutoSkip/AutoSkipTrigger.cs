@@ -20,8 +20,7 @@ using Vanara.PInvoke;
 namespace BetterYYSLS.GameTask.AutoSkip;
 
 /// <summary>
-/// 自动剧情触发器。只处理剧情对话：推进、跳过、继续、跟随和按文字选择选项。
-/// 任务追踪由独立的 <see cref="QuestTracking.QuestTrackingTrigger"/> 负责。
+/// 自动剧情触发器。只处理剧情对话：推进、跳过、跟随和按文字选择选项。
 /// </summary>
 public class AutoSkipTrigger : ITaskTrigger
 {
@@ -120,16 +119,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 return;
             }
 
-            // 2. 剧情暂停，按 T 继续
-            if (config.ResumeWhenPaused && Exists(area, AutoSkipAssets.Instance.ResumeRo))
-            {
-                _lastTalkTime = now;
-                Press(User32.VK.VK_T);
-                _nextActionTime = now.AddMilliseconds(400);
-                return;
-            }
-
-            // 3. 可跳过剧情，按 Space 请求跳过
+            // 2. 可跳过剧情，按 Space 请求跳过
             if (config.SkipCutscene && Exists(area, AutoSkipAssets.Instance.SkipRo))
             {
                 _lastTalkTime = now;
@@ -138,7 +128,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 return;
             }
 
-            // 4. 剧情正在播放：先按 R 倍速，再按 Space 推进
+            // 3. 剧情正在播放：先按 R 倍速，再按 Space 推进
             if (Exists(area, AutoSkipAssets.Instance.PauseRo))
             {
                 _lastTalkTime = now;
@@ -165,7 +155,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 _speedUpSent = false;
             }
 
-            // 5. 跟随 NPC
+            // 4. 跟随 NPC
             if (config.FollowNpc && Exists(area, AutoSkipAssets.Instance.FollowRo))
             {
                 _lastTalkTime = now;
@@ -174,7 +164,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 return;
             }
 
-            // 6. 对话选项：OCR 读取文字后按优先级选择
+            // 5. 对话选项：OCR 读取文字后按优先级选择
             var hasOptionSelection = config.SelectFirstOption ||
                                      config.SelectLastOption ||
                                      config.SelectRandomOption ||
@@ -194,7 +184,7 @@ public class AutoSkipTrigger : ITaskTrigger
 
             TryBringToFrontAfterBackground(config);
 
-            // 7. 黑屏过场：仅在近期确认过剧情界面时点击
+            // 6. 黑屏过场：仅在近期确认过剧情界面时点击
             if (ClickBlackGameScreen(area))
             {
                 return;

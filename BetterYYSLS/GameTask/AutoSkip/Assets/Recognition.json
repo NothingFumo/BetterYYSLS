@@ -1,15 +1,6 @@
 {
   "version": 1,
   "objects": {
-    "Resume": {
-      "template": "resume.png",
-      "x": 0.823,
-      "y": 0.898,
-      "w": 0.094,
-      "h": 0.083,
-      "threshold": 0.8,
-      "draw": true
-    },
     "Skip": {
       "template": "skip.png",
       "x": 0.885,
@@ -53,24 +44,6 @@
       "w": 0.396,
       "h": 0.185,
       "threshold": 0.75,
-      "draw": true
-    },
-    "QuestPanel": {
-      "template": "quest_panel.png",
-      "x": 0.05,
-      "y": 0.019,
-      "w": 0.16,
-      "h": 0.1,
-      "threshold": 0.8,
-      "draw": true
-    },
-    "QuestPanelFallback": {
-      "template": "quest_panel_fallback.png",
-      "x": 0.02,
-      "y": 0.86,
-      "w": 0.15,
-      "h": 0.12,
-      "threshold": 0.8,
       "draw": true
     }
   }

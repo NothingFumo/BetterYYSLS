@@ -40,7 +40,7 @@
                     <ui:TextBlock Grid.Row="1"
                                   Grid.Column="0"
                                   Foreground="{ui:ThemeResource TextFillColorTertiaryBrush}"
-                                  Text="识别剧情按键提示，自动跳过、确认、续播、跟随和选择选项"
+                                  Text="识别剧情按键提示，自动跳过、确认、倍速、跟随和选择选项"
                                   TextWrapping="Wrap" />
                     <ui:ToggleSwitch Grid.Row="0"
                                      Grid.RowSpan="2"
@@ -57,14 +57,6 @@
                     </Grid.ColumnDefinitions>
                     <ui:TextBlock Grid.Column="0" Text="识别到 Space 跳过时自动跳过" VerticalAlignment="Center" />
                     <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.SkipCutscene, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="识别到 T 继续时自动继续" VerticalAlignment="Center" />
-                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.ResumeWhenPaused, Mode=TwoWay}" />
                 </Grid>
                 <Grid Margin="0,4">
                     <Grid.ColumnDefinitions>
@@ -202,46 +194,6 @@
                     </Grid.ColumnDefinitions>
                     <ui:TextBlock Grid.Column="0" Text="后台剧情结束后切回游戏前台" VerticalAlignment="Center" />
                     <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.BringGameToFrontAfterBackgroundDialogEnabled, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="启用时按 J 打开任务界面并追踪任务" VerticalAlignment="Center" />
-                    <ui:ToggleSwitch Grid.Column="1" IsChecked="{Binding Config.AutoSkipConfig.TrackQuestOnStart, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="任务分类（0 进行中 / 1 主章 / 2 残章 / 3 奇遇 / 4 探游，Q/E 切换）" VerticalAlignment="Center" />
-                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.QuestTabIndex, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="任务序号（-1 跟随当前选择）" VerticalAlignment="Center" />
-                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.QuestSelectIndex, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="任务列表最多滚动格数" VerticalAlignment="Center" />
-                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.QuestMaxScrolls, Mode=TwoWay}" />
-                </Grid>
-                <Grid Margin="0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBlock Grid.Column="0" Text="任务列表滚轮间隔（毫秒）" VerticalAlignment="Center" />
-                    <ui:TextBox Grid.Column="1" Width="100" Text="{Binding Config.AutoSkipConfig.QuestScrollStepMs, Mode=TwoWay}" />
                 </Grid>
             </StackPanel>
         </ui:CardExpander>
