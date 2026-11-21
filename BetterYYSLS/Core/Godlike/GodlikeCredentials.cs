@@ -54,7 +54,7 @@ public sealed class GodlikeCredentials
     /// GL-Version。
     /// </summary>
     [JsonPropertyName("GL-Version")]
-    public string Version { get; set; } = "1.0.16";
+    public string Version { get; set; } = "1.0.17";
 
     /// <summary>
     /// 从 Godlike 客户端缓存读取并解密会话。

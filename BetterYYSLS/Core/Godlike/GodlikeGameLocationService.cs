@@ -26,10 +26,10 @@ public sealed class GodlikeGameLocationService : IDisposable
     private const int ProcessQueryInformation = 0x0400;
     private const string ProcessName = "yysls";
 
-    // 2026-10-30 官方 H72_MAP 版本的回退偏移，接口不可用时仍可尝试读取。
-    private const ulong FallbackOffsetX = 0x77E485C;
-    private const ulong FallbackOffsetY = 0x77E4854;
-    private const ulong FallbackOffsetZ = 0x77E4858;
+    // H72_MAP 1.42.27 的回退偏移；优先使用接口返回的实时偏移。
+    private const ulong FallbackOffsetX = 0x784B89C;
+    private const ulong FallbackOffsetY = 0x784B894;
+    private const ulong FallbackOffsetZ = 0x784B898;
 
     private readonly object _sync = new();
     private CancellationTokenSource? _cts;
