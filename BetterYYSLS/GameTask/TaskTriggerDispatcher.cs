@@ -422,35 +422,66 @@ namespace BetterYYSLS.GameTask
             return new CaptureContent(bitmap, _frameIndex, _timer.Interval);
         }
 
+        /// <summary>
+        /// 保存当前画面截图。缓存模式下直接保存最近一帧；
+        /// 未启用缓存时按需捕获一帧，避免快捷键因截图模式未开启而失效。
+        /// </summary>
         public void TakeScreenshot()
         {
-            if (_dispatcherCacheCaptureMode is DispatcherCaptureModeEnum.OnlyCacheCapture or DispatcherCaptureModeEnum.CacheCaptureWithTrigger)
+            Bitmap? bitmap = null;
+            var hasLock = false;
+            try
             {
-                try
+                // 与截图主循环互斥，避免并发调用截图器
+                Monitor.TryEnter(_locker, 1000, ref hasLock);
+                if (!hasLock)
                 {
-                    var path = Global.Absolute($@"log\screenshot\");
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    var bitmap = GetLastCaptureBitmap();
-                    var name = $@"{DateTime.Now:yyyyMMddHHmmssffff}.png";
-                    var savePath = Global.Absolute($@"log\screenshot\{name}");
-
-                    bitmap.Save(savePath, ImageFormat.Png);
-
-                    _logger.LogInformation("截图已保存: {Name}", name);
+                    _logger.LogWarning("截图器忙，无法保存截图");
+                    return;
                 }
-                catch (Exception e)
+
+                if ((_dispatcherCacheCaptureMode is DispatcherCaptureModeEnum.OnlyCacheCapture
+                        or DispatcherCaptureModeEnum.CacheCaptureWithTrigger)
+                    && _frameIndex > 0)
                 {
-                    _logger.LogError("截图保存失败: {Message}", e.Message);
-                    _logger.LogDebug("截图保存失败: {StackTrace}", e.StackTrace);
+                    bitmap = GetLastCaptureBitmap();
                 }
+                else if (GameCapture is { IsCapturing: true })
+                {
+                    bitmap = GameCapture.Capture();
+                }
+
+                if (bitmap is null)
+                {
+                    _logger.LogWarning("截图器未启动，无法保存截图");
+                    return;
+                }
+
+                var path = Global.Absolute(@"log\screenshot\");
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                var name = $@"{DateTime.Now:yyyyMMddHHmmssffff}.png";
+                var savePath = Global.Absolute($@"log\screenshot\{name}");
+
+                bitmap.Save(savePath, ImageFormat.Png);
+
+                _logger.LogInformation("截图已保存: {Name}", name);
             }
-            else
+            catch (Exception e)
             {
-                _logger.LogWarning("当前不处于截图模式，无法保存截图");
+                _logger.LogError("截图保存失败: {Message}", e.Message);
+                _logger.LogDebug("截图保存失败: {StackTrace}", e.StackTrace);
+            }
+            finally
+            {
+                bitmap?.Dispose();
+                if (hasLock)
+                {
+                    Monitor.Exit(_locker);
+                }
             }
         }
     }
