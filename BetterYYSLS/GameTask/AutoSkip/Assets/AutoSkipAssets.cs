@@ -9,9 +9,6 @@ namespace BetterYYSLS.GameTask.AutoSkip.Assets;
 /// </summary>
 public class AutoSkipAssets : BaseAssets<AutoSkipAssets>
 {
-    /// <summary>“Space 跳过”提示</summary>
-    public RecognitionObject SkipRo { get; }
-
     /// <summary>“Space 确认”跳过确认弹窗</summary>
     public RecognitionObject ConfirmRo { get; }
 
@@ -29,7 +26,6 @@ public class AutoSkipAssets : BaseAssets<AutoSkipAssets>
         var width = CaptureRect.Width;
         var height = CaptureRect.Height;
 
-        SkipRo = RecognitionAssets.Get("AutoSkip", "Skip", width, height);
         ConfirmRo = RecognitionAssets.Get("AutoSkip", "Confirm", width, height);
         PauseRo = RecognitionAssets.Get("AutoSkip", "Pause", width, height);
         FollowRo = RecognitionAssets.Get("AutoSkip", "Follow", width, height);

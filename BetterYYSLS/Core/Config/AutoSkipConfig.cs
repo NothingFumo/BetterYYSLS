@@ -22,7 +22,7 @@ public partial class AutoSkipConfig : ObservableObject
     private bool _skipCutscene = true;
 
     /// <summary>
-    /// 识别到“T 暂停”时先按 R 倍速播放
+    /// 剧情播放时自动把倍速切换到 3 倍（游戏提供 1 / 1.25 / 1.5 / 2 / 3 五档）
     /// </summary>
     [ObservableProperty]
     private bool _speedUpDialogue = true;

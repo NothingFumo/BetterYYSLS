@@ -1,15 +1,6 @@
 {
   "version": 1,
   "objects": {
-    "Skip": {
-      "template": "skip.png",
-      "x": 0.885,
-      "y": 0.898,
-      "w": 0.109,
-      "h": 0.083,
-      "threshold": 0.8,
-      "draw": true
-    },
     "Confirm": {
       "template": "confirm.png",
       "x": 0.375,

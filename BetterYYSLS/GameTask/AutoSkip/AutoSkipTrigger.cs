@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using Vanara.PInvoke;
@@ -26,7 +27,16 @@ public class AutoSkipTrigger : ITaskTrigger
 {
     private readonly ILogger<AutoSkipTrigger> _logger = App.GetLogger<AutoSkipTrigger>();
 
-    /// <summary>下一次允许操作的时间</summary>
+    /// <summary>底部提示 OCR 的最小间隔（毫秒）</summary>
+    private const int HintScanIntervalMilliseconds = 600;
+
+    /// <summary>按 Space 推进单句的最小间隔，保证台词出现约 1 秒后再跳过</summary>
+    private const int LineAdvanceIntervalMilliseconds = 1000;
+
+    /// <summary>目标倍速，游戏提供 1 / 1.25 / 1.5 / 2 / 3 五档</summary>
+    private const double TargetSpeed = 3.0;
+
+    /// <summary>下一次允许执行操作的时间</summary>
     private DateTime _nextActionTime = DateTime.MinValue;
 
     /// <summary>最近一次识别到“剧情播放中”的时间</summary>
@@ -41,8 +51,26 @@ public class AutoSkipTrigger : ITaskTrigger
     /// <summary>下一次允许 OCR 扫描选项的时间</summary>
     private DateTime _nextOptionScanTime = DateTime.MinValue;
 
-    /// <summary>本次剧情是否已按过 R 倍速</summary>
-    private bool _speedUpSent;
+    /// <summary>下一次允许扫描底部按键提示的时间</summary>
+    private DateTime _nextHintScanTime = DateTime.MinValue;
+
+    /// <summary>最近一次解析到的底部按键提示</summary>
+    private AutoSkipHintSnapshot _cachedHints;
+
+    /// <summary>下一次允许按 R 调整倍速的时间</summary>
+    private DateTime _nextSpeedPressTime = DateTime.MinValue;
+
+    /// <summary>OCR 读不到倍速时，本段剧情已经按 R 的次数</summary>
+    private int _speedPressCount;
+
+    /// <summary>下一次允许按 Esc 整段跳过的时间</summary>
+    private DateTime _nextSkipPressTime = DateTime.MinValue;
+
+    /// <summary>下一次允许按 Space 推进单句的时间</summary>
+    private DateTime _nextLinePressTime = DateTime.MinValue;
+
+    /// <summary>上一帧是否处于剧情播放中</summary>
+    private bool _wasPlaying;
 
     /// <summary>语音结束等待器</summary>
     private DialogueOptionAudioWaiter? _voiceWaiter;
@@ -83,7 +111,13 @@ public class AutoSkipTrigger : ITaskTrigger
     public void Init()
     {
         IsEnabled = Config?.Enabled == true;
-        _speedUpSent = false;
+        _speedPressCount = 0;
+        _wasPlaying = false;
+        _cachedHints = default;
+        _nextHintScanTime = DateTime.MinValue;
+        _nextSpeedPressTime = DateTime.MinValue;
+        _nextSkipPressTime = DateTime.MinValue;
+        _nextLinePressTime = DateTime.MinValue;
         _voiceWaiter?.ReleaseDetector();
         _voiceWaiter = null;
         AutoSkipAssets.DestroyInstance();
@@ -119,17 +153,25 @@ public class AutoSkipTrigger : ITaskTrigger
                 return;
             }
 
-            // 2. 可跳过剧情，按 Space 请求跳过
-            if (config.SkipCutscene && Exists(area, AutoSkipAssets.Instance.SkipRo))
+            // 2. 读取底部按键提示：Esc 跳过 / R 倍速 / T 暂停
+            var hints = ReadBottomHints(area, now);
+            var playing = hints.IsPlaying || Exists(area, AutoSkipAssets.Instance.PauseRo);
+
+            // 3. 出现“Esc 跳过”时按 Esc 整段跳过；只在提示存在时按，避免误开菜单
+            if (config.SkipCutscene && hints.CanSkip && now >= _nextSkipPressTime)
             {
                 _lastTalkTime = now;
-                Press(User32.VK.VK_SPACE);
-                _nextActionTime = now.AddMilliseconds(800);
+                _lastPlayingTime = now;
+                Press(User32.VK.VK_ESCAPE);
+                _cachedHints = default;
+                _nextSkipPressTime = now.AddMilliseconds(1500);
+                _nextActionTime = now.AddMilliseconds(1200);
+                _logger.LogInformation("自动剧情：按 Esc 跳过整段剧情");
                 return;
             }
 
-            // 3. 剧情正在播放：先按 R 倍速，再按 Space 推进
-            if (Exists(area, AutoSkipAssets.Instance.PauseRo))
+            // 4. 剧情播放中：先把倍速调到 3 倍，再按 Space 跳过单句
+            if (playing)
             {
                 _lastTalkTime = now;
                 _lastPlayingTime = now;
@@ -137,25 +179,45 @@ public class AutoSkipTrigger : ITaskTrigger
                 {
                     _pendingBringToFront = true;
                 }
-                if (config.SpeedUpDialogue && !_speedUpSent)
+
+                // 台词刚出现时先等约 1 秒，避免空按
+                if (!_wasPlaying)
+                {
+                    _wasPlaying = true;
+                    _nextLinePressTime = now.AddMilliseconds(LineAdvanceIntervalMilliseconds);
+                }
+
+                if (config.SpeedUpDialogue &&
+                    now >= _nextSpeedPressTime &&
+                    ShouldAdjustSpeed(hints.Speed))
                 {
                     Press(User32.VK.VK_R);
-                    _speedUpSent = true;
+                    _speedPressCount++;
+                    _nextSpeedPressTime = now.AddMilliseconds(HintScanIntervalMilliseconds + 100);
                     _nextActionTime = now.AddMilliseconds(300);
+                    _logger.LogInformation("自动剧情：调整倍速，当前 {Speed}", FormatSpeed(hints.Speed));
                     return;
                 }
 
-                Press(User32.VK.VK_SPACE);
-                _nextActionTime = now.AddMilliseconds(700);
+                if (now >= _nextLinePressTime)
+                {
+                    Press(User32.VK.VK_SPACE);
+                    _nextLinePressTime = now.AddMilliseconds(LineAdvanceIntervalMilliseconds);
+                    _nextActionTime = now.AddMilliseconds(LineAdvanceIntervalMilliseconds);
+                }
+
                 return;
             }
 
-            if ((now - _lastPlayingTime).TotalSeconds > 3)
+            if (_wasPlaying && (now - _lastPlayingTime).TotalSeconds > 3)
             {
-                _speedUpSent = false;
+                // 剧情播放结束，重置倍速兜底计数和旧提示，避免下一段沿用
+                _wasPlaying = false;
+                _speedPressCount = 0;
+                _cachedHints = default;
             }
 
-            // 4. 跟随 NPC
+            // 5. 跟随 NPC
             if (config.FollowNpc && Exists(area, AutoSkipAssets.Instance.FollowRo))
             {
                 _lastTalkTime = now;
@@ -164,7 +226,7 @@ public class AutoSkipTrigger : ITaskTrigger
                 return;
             }
 
-            // 5. 对话选项：OCR 读取文字后按优先级选择
+            // 6. 对话选项：OCR 读取文字后按优先级选择
             var hasOptionSelection = config.SelectFirstOption ||
                                      config.SelectLastOption ||
                                      config.SelectRandomOption ||
@@ -184,7 +246,7 @@ public class AutoSkipTrigger : ITaskTrigger
 
             TryBringToFrontAfterBackground(config);
 
-            // 6. 黑屏过场：仅在近期确认过剧情界面时点击
+            // 7. 黑屏过场：仅在近期确认过剧情界面时点击
             if (ClickBlackGameScreen(area))
             {
                 return;
@@ -195,6 +257,53 @@ public class AutoSkipTrigger : ITaskTrigger
             _logger.LogWarning(e, "自动剧情识别失败");
             _nextActionTime = DateTime.Now.AddMilliseconds(1000);
         }
+    }
+
+    /// <summary>
+    /// 是否需要按 R 调整倍速。识别到倍速时以 3 倍为目标；
+    /// 每段剧情最多按 4 次（1 → 1.25 → 1.5 → 2 → 3），避免 OCR 误读导致无限循环。
+    /// </summary>
+    private bool ShouldAdjustSpeed(double speed)
+    {
+        return _speedPressCount < 4 && (speed <= 0 || speed < TargetSpeed - 0.001);
+    }
+
+    /// <summary>
+    /// 倍速日志文本，未识别到倍速时输出“未知”。
+    /// </summary>
+    private static string FormatSpeed(double speed)
+    {
+        return speed > 0 ? speed.ToString("0.##", CultureInfo.InvariantCulture) : "未知";
+    }
+
+    /// <summary>
+    /// OCR 读取底部按键提示条，带节流与缓存。
+    /// 提示条位于画面底部约 11% 的高度内，包含 Esc 跳过、R 倍速、T 暂停等文本。
+    /// </summary>
+    private AutoSkipHintSnapshot ReadBottomHints(ImageRegion area, DateTime now)
+    {
+        if (now < _nextHintScanTime)
+        {
+            return _cachedHints;
+        }
+
+        _nextHintScanTime = now.AddMilliseconds(HintScanIntervalMilliseconds);
+        try
+        {
+            var roi = new Rect(
+                0,
+                (int)(area.Height * 0.88),
+                area.Width,
+                Math.Max(1, (int)(area.Height * 0.11)));
+            using var mat = new Mat(area.SrcMat, roi);
+            _cachedHints = AutoSkipHintSnapshot.Parse(OcrService.Instance.Ocr(mat));
+        }
+        catch (Exception e)
+        {
+            _logger.LogDebug(e, "自动剧情：底部按键提示识别失败");
+        }
+
+        return _cachedHints;
     }
 
     /// <summary>
@@ -295,10 +404,20 @@ public class AutoSkipTrigger : ITaskTrigger
                 }
             }
 
-            var center = options[selected].Rect.Center;
-            ClickAt(area, roi.X + center.X, roi.Y + center.Y);
+            var option = options[selected];
             _voiceWaiter?.Cancel();
-            _logger.LogInformation("自动剧情选择选项：{Text}", options[selected].Text);
+
+            // 目标行带 F 标记时按 F，否则鼠标点击；F 标记只出现在当前高亮行
+            if (HasOptionShortcutMarker(result.Regions, option))
+            {
+                Press(User32.VK.VK_F);
+                _logger.LogInformation("自动剧情按 F 选择选项：{Text}", option.Text);
+                return true;
+            }
+
+            var center = option.Rect.Center;
+            ClickAt(area, roi.X + center.X, roi.Y + center.Y);
+            _logger.LogInformation("自动剧情选择选项：{Text}", option.Text);
             return true;
         }
         catch (Exception e)
@@ -306,6 +425,36 @@ public class AutoSkipTrigger : ITaskTrigger
             _logger.LogWarning(e, "OCR 识别对话选项失败");
             return false;
         }
+    }
+
+    /// <summary>
+    /// 判断目标选项行是否带 F 快捷键标记。OCR 可能把 F 单独识别成一行，
+    /// 也可能与选项文字合并；两种都视为带标记。
+    /// </summary>
+    private static bool HasOptionShortcutMarker(IReadOnlyList<OcrResultRegion> regions, OcrResultRegion option)
+    {
+        var optionText = Normalize(option.Text);
+        if (optionText.StartsWith('F') || optionText.StartsWith('f'))
+        {
+            return true;
+        }
+
+        var tolerance = Math.Max(12d, option.Rect.Size.Height * 0.8);
+        foreach (var region in regions)
+        {
+            if (Math.Abs(region.Rect.Center.Y - option.Rect.Center.Y) > tolerance)
+            {
+                continue;
+            }
+
+            var text = Normalize(region.Text);
+            if (text.Length is > 0 and <= 2 && (text.Contains('F') || text.Contains('f')))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
