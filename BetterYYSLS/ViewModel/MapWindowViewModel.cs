@@ -44,6 +44,9 @@ public partial class MapWindowViewModel : ObservableObject
     /// <summary>从持久化配置恢复地图选项时阻止重复保存。</summary>
     private bool _restoringMapSelection;
 
+    /// <summary>从持久化配置恢复筛选偏好时阻止重复保存。</summary>
+    private bool _restoringFilterPreferences;
+
     /// <summary>上一次解析出的玩家坐标区域，用于识别跨区域切换。</summary>
     private string? _lastPlayerSubType;
 
@@ -258,6 +261,24 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private bool _isAlwaysOnTop;
+
+    /// <summary>
+    /// 跨登录记录分类勾选与隐藏已完成。
+    /// </summary>
+    [ObservableProperty]
+    private bool _recordFilterPreferences = true;
+
+    /// <summary>
+    /// 跨登录记录区域、子区域与位面选择。
+    /// </summary>
+    [ObservableProperty]
+    private bool _recordMapSelection = true;
+
+    /// <summary>
+    /// 隐藏小地图边缘分类图标；本轮未实现小地图，仅保留配置。
+    /// </summary>
+    [ObservableProperty]
+    private bool _hideMinimapEdgeIcons;
 
     /// <summary>
     /// 实时坐标状态。
@@ -596,6 +617,8 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     public async Task LoadDefaultAsync()
     {
+        // 先恢复地图窗口设置，再加载快照和区域，避免恢复过程中把默认值写回配置。
+        LoadMapSettings();
         // 先恢复上次角色，角色输入框和顶栏头像不必等网络角色列表返回。
         if (LoadPersistedRole() is { } persistedRole)
         {
@@ -1009,10 +1032,101 @@ public partial class MapWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 从持久化配置恢复地图窗口设置。
+    /// </summary>
+    private void LoadMapSettings()
+    {
+        var config = ConfigService.Config?.MapWindowConfig;
+        if (config is null)
+        {
+            return;
+        }
+
+        RecordFilterPreferences = config.RecordFilterPreferences;
+        RecordMapSelection = config.RecordMapSelection;
+        HideMinimapEdgeIcons = config.HideMinimapEdgeIcons;
+        IsAlwaysOnTop = config.AlwaysOnTop;
+        HideCompleted = config.HideCompleted;
+    }
+
+    /// <summary>
+    /// 把地图窗口设置写回配置。
+    /// </summary>
+    private void SaveMapSettings()
+    {
+        var config = ConfigService.Config?.MapWindowConfig;
+        if (config is null)
+        {
+            return;
+        }
+
+        config.RecordFilterPreferences = RecordFilterPreferences;
+        config.RecordMapSelection = RecordMapSelection;
+        config.HideMinimapEdgeIcons = HideMinimapEdgeIcons;
+        config.AlwaysOnTop = IsAlwaysOnTop;
+        ConfigService.Config?.OnAnyChangedAction?.Invoke();
+    }
+
+    /// <summary>
+    /// 从配置恢复分类勾选与隐藏已完成。
+    /// </summary>
+    private void RestoreFilterPreferences()
+    {
+        if (!RecordFilterPreferences || ConfigService.Config?.MapWindowConfig is not { } config)
+        {
+            return;
+        }
+
+        _restoringFilterPreferences = true;
+        try
+        {
+            var visibleIds = config.VisibleCategoryIds.ToHashSet(StringComparer.Ordinal);
+            if (visibleIds.Count > 0)
+            {
+                foreach (var category in Categories)
+                {
+                    category.IsVisible = visibleIds.Contains(category.Id);
+                }
+            }
+
+            HideCompleted = config.HideCompleted;
+        }
+        finally
+        {
+            _restoringFilterPreferences = false;
+        }
+    }
+
+    /// <summary>
+    /// 保存分类勾选与隐藏已完成。
+    /// </summary>
+    private void SaveFilterPreferences()
+    {
+        if (_restoringFilterPreferences ||
+            !RecordFilterPreferences ||
+            ConfigService.Config?.MapWindowConfig is not { } config)
+        {
+            return;
+        }
+
+        config.HideCompleted = HideCompleted;
+        config.VisibleCategoryIds = Categories
+            .Where(category => category.IsVisible)
+            .Select(category => category.Id)
+            .ToList();
+        ConfigService.Config?.OnAnyChangedAction?.Invoke();
+    }
+
+    /// <summary>
     /// 从持久化配置恢复区域和位面。
     /// </summary>
     private void RestoreMapSelection()
     {
+        if (!RecordMapSelection)
+        {
+            return;
+        }
+
         _restoringMapSelection = true;
         try
         {
@@ -1144,7 +1258,9 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     private void SaveMapSelection()
     {
-        if (_restoringMapSelection || ConfigService.Config is not { } config)
+        if (!RecordMapSelection ||
+            _restoringMapSelection ||
+            ConfigService.Config is not { } config)
         {
             return;
         }
@@ -2239,6 +2355,7 @@ public partial class MapWindowViewModel : ObservableObject
 
         SelectedCategoryGroup = null;
 
+        RestoreFilterPreferences();
         RestoreMapSelection();
         RefreshDashboard();
         RefreshFilters();
@@ -2289,11 +2406,20 @@ public partial class MapWindowViewModel : ObservableObject
     partial void OnHideCompletedChanged(bool value)
     {
         RefreshFilters();
+        SaveFilterPreferences();
         if (value)
         {
             ScheduleCompletionRefresh();
         }
     }
+
+    partial void OnRecordFilterPreferencesChanged(bool value) => SaveMapSettings();
+
+    partial void OnRecordMapSelectionChanged(bool value) => SaveMapSettings();
+
+    partial void OnHideMinimapEdgeIconsChanged(bool value) => SaveMapSettings();
+
+    partial void OnIsAlwaysOnTopChanged(bool value) => SaveMapSettings();
 
     /// <summary>
     /// 合并短时间内的分类切换，避免每个勾选都立即发起完成状态请求。
@@ -2466,6 +2592,7 @@ public partial class MapWindowViewModel : ObservableObject
             _completionRefreshCompleted = false;
             RefreshFilters();
             ScheduleCompletionRefresh();
+            SaveFilterPreferences();
         }
     }
 

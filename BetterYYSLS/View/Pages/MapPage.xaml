@@ -61,6 +61,30 @@
                 </StackPanel>
             </ui:Card>
 
+            <ui:Card Margin="0,12,0,0">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="实时地图工具" />
+                    <ui:TextBlock Margin="0,4,0,10"
+                                  Foreground="{ui:ThemeResource TextFillColorTertiaryBrush}"
+                                  Text="实时坐标定位、自动跟随与完成态刷新常开；以下为跨登录记忆项。" />
+                    <ui:ToggleSwitch Content="记录筛选偏好"
+                                     IsChecked="{Binding Map.RecordFilterPreferences, Mode=TwoWay}"
+                                     Margin="0,0,0,8"
+                                     ToolTip="下次登录默认选中上次勾选的玩法类型与隐藏已完成" />
+                    <ui:ToggleSwitch Content="记录地图区域选项"
+                                     IsChecked="{Binding Map.RecordMapSelection, Mode=TwoWay}"
+                                     Margin="0,0,0,8"
+                                     ToolTip="下次登录默认选中上次选择的区域与位面" />
+                    <ui:ToggleSwitch Content="地图工具默认置顶"
+                                     IsChecked="{Binding Map.IsAlwaysOnTop, Mode=TwoWay}"
+                                     Margin="0,0,0,8"
+                                     ToolTip="地图窗口固定在最上层，不被其他窗口遮挡" />
+                    <ui:ToggleSwitch Content="隐藏小地图边缘图标"
+                                     IsChecked="{Binding Map.HideMinimapEdgeIcons, Mode=TwoWay}"
+                                     ToolTip="预留给后续小地图；本轮尚无小地图，开关暂不生效" />
+                </StackPanel>
+            </ui:Card>
+
             <ui:Card>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="已实现能力" />

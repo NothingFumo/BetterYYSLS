@@ -27,6 +27,41 @@ public partial class MapWindowConfig : ObservableObject
     private bool _autoSwitchToPlayerMap = true;
 
     /// <summary>
+    /// 跨登录记录分类勾选与隐藏已完成。
+    /// </summary>
+    [ObservableProperty]
+    private bool _recordFilterPreferences = true;
+
+    /// <summary>
+    /// 跨登录记录区域、子区域与位面选择。
+    /// </summary>
+    [ObservableProperty]
+    private bool _recordMapSelection = true;
+
+    /// <summary>
+    /// 地图窗口默认置顶。
+    /// </summary>
+    [ObservableProperty]
+    private bool _alwaysOnTop = true;
+
+    /// <summary>
+    /// 隐藏小地图边缘分类图标；本轮未实现小地图，仅保留配置。
+    /// </summary>
+    [ObservableProperty]
+    private bool _hideMinimapEdgeIcons;
+
+    /// <summary>
+    /// 记录筛选偏好时保存的可见分类 ID。
+    /// </summary>
+    public List<string> VisibleCategoryIds { get; set; } = [];
+
+    /// <summary>
+    /// 记录筛选偏好时保存的“隐藏已完成标点”。
+    /// </summary>
+    [ObservableProperty]
+    private bool _hideCompleted = true;
+
+    /// <summary>
     /// 上次选择的角色 ID；包含手动输入、不在账号绑定列表中的角色。
     /// </summary>
     [ObservableProperty]
