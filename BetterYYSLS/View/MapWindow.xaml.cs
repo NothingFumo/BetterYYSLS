@@ -88,7 +88,27 @@ public partial class MapWindow : Window
             _closeConfirmUntil = default;
             HeaderCloseButton.Content = "关闭";
         };
-        _hotkeyHook.KeyPressed += (_, _) => _viewModel.IsClickThrough = !_viewModel.IsClickThrough;
+        _hotkeyHook.KeyPressed += (_, args) =>
+        {
+            if (args.Key != Keys.M)
+            {
+                return;
+            }
+
+            if (args.Modifier == Vanara.PInvoke.User32.HotKeyModifiers.MOD_ALT)
+            {
+                // Alt+M 从托盘/隐藏状态恢复地图。
+                Show();
+                Activate();
+                return;
+            }
+
+            if (args.Modifier.HasFlag(Vanara.PInvoke.User32.HotKeyModifiers.MOD_CONTROL) &&
+                args.Modifier.HasFlag(Vanara.PInvoke.User32.HotKeyModifiers.MOD_ALT))
+            {
+                _viewModel.IsClickThrough = !_viewModel.IsClickThrough;
+            }
+        };
         MapView.MarkerSelected += OnMarkerSelected;
         MapView.FollowPlayerCancelled += (_, _) => _viewModel.IsPlayerCentered = false;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
@@ -151,12 +171,24 @@ public partial class MapWindow : Window
                 Vanara.PInvoke.User32.HotKeyModifiers.MOD_CONTROL |
                 Vanara.PInvoke.User32.HotKeyModifiers.MOD_ALT,
                 Keys.M);
-            _hotkeyRegistered = true;
         }
         catch (InvalidOperationException)
         {
             // 热键被其他程序占用时保留界面按钮作为退路。
         }
+
+        try
+        {
+            _hotkeyHook.RegisterHotKey(
+                Vanara.PInvoke.User32.HotKeyModifiers.MOD_ALT,
+                Keys.M);
+        }
+        catch (InvalidOperationException)
+        {
+            // Alt+M 被占用时仍可用托盘或主窗口恢复地图。
+        }
+
+        _hotkeyRegistered = true;
     }
 
     /// <summary>
