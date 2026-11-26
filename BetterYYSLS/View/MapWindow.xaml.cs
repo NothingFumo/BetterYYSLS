@@ -44,7 +44,9 @@ public partial class MapWindow : Window
     private readonly DispatcherTimer _followTimer;
     private readonly DispatcherTimer _clickThroughTimer;
     private readonly DispatcherTimer _topmostTimer;
+    private readonly DispatcherTimer _closeConfirmTimer;
     private readonly HotkeyHook _hotkeyHook = new();
+    private DateTime _closeConfirmUntil;
     private bool _loaded;
     private bool _sidebarCollapsed;
     private bool _hotkeyRegistered;
@@ -70,6 +72,14 @@ public partial class MapWindow : Window
         // 游戏可能也是置顶窗口，定期重新声明 TOPMOST，避免被游戏重新压到下面。
         _topmostTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         _topmostTimer.Tick += (_, _) => EnsureTopmost();
+        // 关闭前需要 1.5 秒内再次点击确认，避免误触游戏右上角操作。
+        _closeConfirmTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+        _closeConfirmTimer.Tick += (_, _) =>
+        {
+            _closeConfirmTimer.Stop();
+            _closeConfirmUntil = default;
+            HeaderCloseButton.Content = "关闭";
+        };
         _hotkeyHook.KeyPressed += (_, _) => _viewModel.IsClickThrough = !_viewModel.IsClickThrough;
         MapView.MarkerSelected += OnMarkerSelected;
         MapView.FollowPlayerCancelled += (_, _) => _viewModel.IsPlayerCentered = false;
@@ -224,8 +234,32 @@ public partial class MapWindow : Window
         return false;
     }
 
-    private void OnCloseClick(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// 打开或关闭顶栏左侧的地图控制菜单。
+    /// </summary>
+    private void OnHeaderMenuClick(object sender, RoutedEventArgs e)
     {
+        HeaderMenuPopup.IsOpen = !HeaderMenuPopup.IsOpen;
+    }
+
+    /// <summary>
+    /// 关闭地图：首次点击进入确认状态，1.5 秒内再次点击才隐藏。
+    /// </summary>
+    private void OnCloseMenuClick(object sender, RoutedEventArgs e)
+    {
+        if (DateTime.UtcNow > _closeConfirmUntil)
+        {
+            _closeConfirmUntil = DateTime.UtcNow.AddMilliseconds(1500);
+            HeaderCloseButton.Content = "再点一次关闭";
+            _closeConfirmTimer.Stop();
+            _closeConfirmTimer.Start();
+            return;
+        }
+
+        _closeConfirmTimer.Stop();
+        _closeConfirmUntil = default;
+        HeaderCloseButton.Content = "关闭";
+        HeaderMenuPopup.IsOpen = false;
         // 穿透状态由窗口样式控制，隐藏前先恢复交互，避免下次打开仍无法点击。
         _viewModel.IsClickThrough = false;
         Hide();

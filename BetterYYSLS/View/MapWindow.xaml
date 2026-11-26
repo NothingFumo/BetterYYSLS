@@ -322,6 +322,73 @@
                                       Foreground="#E8E1D2"
                                       IsChecked="{Binding IsAlwaysOnTop, Mode=TwoWay}"
                                       ToolTip="始终显示在游戏窗口之上" />
+                            <Button x:Name="HeaderMenuButton"
+                                    Width="30"
+                                    Height="28"
+                                    Margin="12,0,0,0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Background="#3310151A"
+                                    BorderBrush="#77C9B27A"
+                                    BorderThickness="1"
+                                    Click="OnHeaderMenuClick"
+                                    ToolTip="地图控制">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe UI"
+                                           FontSize="16"
+                                           Foreground="#E8E1D2"
+                                           Text="⋯" />
+                            </Button>
+                            <Popup x:Name="HeaderMenuPopup"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   Placement="Bottom"
+                                   PlacementTarget="{Binding ElementName=HeaderMenuButton}"
+                                   PopupAnimation="Fade"
+                                   StaysOpen="False">
+                                <Border Padding="4"
+                                        Background="#FF2E2E2E"
+                                        BorderBrush="#77C9B27A"
+                                        BorderThickness="1"
+                                        CornerRadius="3">
+                                    <StackPanel Width="132">
+                                        <Button Height="34"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding RefreshCurrentResultsCommand}"
+                                                Content="刷新"
+                                                Foreground="#E8E1D2"
+                                                Padding="10,0" />
+                                        <Button Height="34"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding ToggleFullScreenCommand}"
+                                                Content="全屏"
+                                                Foreground="#E8E1D2"
+                                                Padding="10,0" />
+                                        <Button Height="34"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Click="OnMinimizeClick"
+                                                Content="最小化"
+                                                Foreground="#E8E1D2"
+                                                Padding="10,0" />
+                                        <Button x:Name="HeaderCloseButton"
+                                                Height="34"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Click="OnCloseMenuClick"
+                                                Content="关闭"
+                                                Foreground="#E8E1D2"
+                                                Padding="10,0" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
                             <Popup x:Name="RegionPopup"
                                    Width="430"
                                    AllowsTransparency="True"
@@ -437,6 +504,7 @@
                             </Popup>
                         </StackPanel>
                         <StackPanel Grid.Column="1"
+                                    Margin="0,0,12,0"
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal">
                             <CheckBox x:Name="ClickThroughButton"
@@ -461,42 +529,6 @@
                                       Foreground="#E8E1D2"
                                       IsChecked="{Binding IsPlayerCentered, Mode=TwoWay}"
                                       ToolTip="开启后角色保持居中，并跟随角色自动切换地图" />
-                            <Button Command="{Binding RefreshCurrentResultsCommand}"
-                                    Style="{StaticResource ChromeButtonStyle}"
-                                    ToolTip="按当前选项重新计算">
-                                <Image Width="18"
-                                       Height="18"
-                                       Source="pack://application:,,,/BetterYYSLS;component/Assets/Map/refresh.png"
-                                       Stretch="Uniform" />
-                            </Button>
-                            <Button Click="OnMinimizeClick"
-                                    Style="{StaticResource ChromeButtonStyle}"
-                                    ToolTip="最小化">
-                                <Image Width="16"
-                                       Height="16"
-                                       Source="pack://application:,,,/BetterYYSLS;component/Assets/Map/min.png"
-                                       Stretch="Uniform" />
-                            </Button>
-                            <Button Command="{Binding ToggleFullScreenCommand}"
-                                    Style="{StaticResource ChromeButtonStyle}"
-                                    ToolTip="全屏">
-                                <Image Width="16"
-                                       Height="16"
-                                       Source="pack://application:,,,/BetterYYSLS;component/Assets/Map/max.png"
-                                       Stretch="Uniform" />
-                            </Button>
-                            <Button x:Name="CloseButton"
-                                    Click="OnCloseClick"
-                                    Style="{StaticResource ChromeButtonStyle}"
-                                    ToolTip="关闭">
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe UI"
-                                           FontSize="18"
-                                           FontWeight="Light"
-                                           Foreground="#E8E1D2"
-                                           Text="×" />
-                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -857,23 +889,6 @@
                                     </Border>
                                 </Popup>
                             </StackPanel>
-                            <Border Margin="12"
-                                    Padding="10,8"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Bottom"
-                                    Background="#FF101218"
-                                    CornerRadius="5"
-                                    IsHitTestVisible="False">
-                                <StackPanel>
-                                    <TextBlock FontSize="11"
-                                               Foreground="#E8E1D2"
-                                               Text="{Binding Status}" />
-                                    <TextBlock FontSize="10"
-                                               Foreground="#AAB0B8"
-                                               Text="{Binding RouteSummary}" />
-                                </StackPanel>
-                            </Border>
-
                             <StackPanel Margin="12"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Bottom">
