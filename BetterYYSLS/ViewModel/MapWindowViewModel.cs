@@ -61,6 +61,9 @@ public partial class MapWindowViewModel : ObservableObject
     /// <summary>上一次解析出的玩家坐标区域，用于识别跨区域切换。</summary>
     private string? _lastPlayerSubType;
 
+    /// <summary>上一次用于计算八方位的位置。</summary>
+    private MapPoint? _lastDirectionPosition;
+
     /// <summary>
     /// 创建大地图窗口视图模型。
     /// </summary>
@@ -128,6 +131,7 @@ public partial class MapWindowViewModel : ObservableObject
                 location.WorldY);
             var locationSubType = ResolveLocationSubType(normalized.X, normalized.Y)
                                   ?? location.SubType;
+            UpdatePlayerDirection(normalized);
             PlayerWorldPosition = new MapPoint(normalized.X, normalized.Y, location.WorldZ);
             // 坐标投影必须使用角色实际所在地图，而不是用户当前打开的区域。
             PlayerMapPosition = GodlikeProjection.WorldToMap(
@@ -146,6 +150,38 @@ public partial class MapWindowViewModel : ObservableObject
     /// 角色坐标解析用的点位半径；超出后回退到区域中心。
     /// </summary>
     private const double MarkerResolveRadius = 300;
+
+    /// <summary>
+    /// 根据相邻坐标差计算八方位文本；位移小于死区时保留上一次方向。
+    /// </summary>
+    private void UpdatePlayerDirection(MapPoint position)
+    {
+        if (_lastDirectionPosition is { } previous)
+        {
+            var deltaX = position.X - previous.X;
+            var deltaY = position.Y - previous.Y;
+            if ((deltaX * deltaX) + (deltaY * deltaY) > 9d)
+            {
+                // 地图 Y 轴向下，0° 为北，顺时针 90° 为东。
+                var angle = Math.Atan2(deltaX, -deltaY) * 180d / Math.PI;
+                var normalizedAngle = (angle % 360d + 360d) % 360d;
+                var index = (int)Math.Round(normalizedAngle / 45d) % 8;
+                PlayerDirection = index switch
+                {
+                    0 => "北",
+                    1 => "东北",
+                    2 => "东",
+                    3 => "东南",
+                    4 => "南",
+                    5 => "西南",
+                    6 => "西",
+                    _ => "西北"
+                };
+            }
+        }
+
+        _lastDirectionPosition = position;
+    }
 
     /// <summary>
     /// 按角色世界坐标选择 mapSubType。
@@ -299,6 +335,12 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private string _locationStatus = "实时坐标未启动";
+
+    /// <summary>
+    /// 角色朝向的八方位文本。
+    /// </summary>
+    [ObservableProperty]
+    private string _playerDirection = string.Empty;
 
     /// <summary>
     /// 官方登录态状态。

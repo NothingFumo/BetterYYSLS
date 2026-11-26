@@ -68,6 +68,8 @@ public sealed class MapCanvas : FrameworkElement
     private double _zoom = 16;
     private MapPoint? _lastPlayerPosition;
     private double _playerHeading;
+    private double _playerHeadingRaw;
+    private readonly Queue<double> _headingSamples = new();
 
     static MapCanvas()
     {
@@ -1244,6 +1246,7 @@ public sealed class MapCanvas : FrameworkElement
         if (!position.HasValue)
         {
             _lastPlayerPosition = null;
+            _headingSamples.Clear();
             return;
         }
 
@@ -1251,11 +1254,31 @@ public sealed class MapCanvas : FrameworkElement
         {
             var deltaX = position.Value.X - previous.X;
             var deltaY = position.Value.Y - previous.Y;
-            if ((deltaX * deltaX) + (deltaY * deltaY) > 1e-8)
+            // 死区：角色轻微移动或原地转身时保持上一次方向，避免箭头抖动。
+            if ((deltaX * deltaX) + (deltaY * deltaY) > 9d)
             {
                 // 地图 Y 轴向下，素材默认朝上，因此以 atan2(dx, -dy) 得到顺时针角度。
-                // 采样提高到 100ms 后直接使用最新位移，避免箭头滞后。
-                _playerHeading = Math.Atan2(deltaX, -deltaY) * 180d / Math.PI;
+                var angle = Math.Atan2(deltaX, -deltaY) * 180d / Math.PI;
+                // 角度环绕：把最新角度展开到当前原始角附近，避免 359° → 1° 跳变。
+                var delta = angle - (_playerHeadingRaw % 360d);
+                while (delta > 180d)
+                {
+                    delta -= 360d;
+                }
+                while (delta < -180d)
+                {
+                    delta += 360d;
+                }
+
+                _playerHeadingRaw += delta;
+                _headingSamples.Enqueue(_playerHeadingRaw);
+                while (_headingSamples.Count > 5)
+                {
+                    _headingSamples.Dequeue();
+                }
+
+                // 5 次滑动平均，抑制单帧位移噪声。
+                _playerHeading = _headingSamples.Average() % 360d;
             }
         }
 
