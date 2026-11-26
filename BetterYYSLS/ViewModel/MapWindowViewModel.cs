@@ -51,6 +51,12 @@ public partial class MapWindowViewModel : ObservableObject
     {
         Interval = TimeSpan.FromSeconds(30)
     };
+    // 已完成点位延迟 200ms 再移出视野，避免完成状态刷新时瞬间闪烁。
+    private readonly DispatcherTimer _fadeTimer = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(200)
+    };
+    private readonly HashSet<string> _fadingMarkerIds = new(StringComparer.Ordinal);
 
     /// <summary>从持久化配置恢复地图选项时阻止重复保存。</summary>
     private bool _restoringMapSelection;
@@ -73,6 +79,12 @@ public partial class MapWindowViewModel : ObservableObject
         _locationService.StatusChanged += OnLocationStatusChanged;
         _sessionService.StateChanged += OnSessionChanged;
         _completionPollTimer.Tick += (_, _) => RefreshCompletionNow(MaxCompletionPollTargets);
+        _fadeTimer.Tick += (_, _) =>
+        {
+            _fadeTimer.Stop();
+            _fadingMarkerIds.Clear();
+            RefreshFilters();
+        };
         _completionDebounceTimer.Tick += (_, _) =>
         {
             _completionDebounceTimer.Stop();
@@ -767,7 +779,15 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     private void ApplyMarkerCompletion(MapMarker marker, MapMarkerDetails detail)
     {
+        var previous = _completionStore.Get(RoleId, marker.Id);
         _completionStore.Set(RoleId, marker.Id, new MarkerCompletion(true, detail.IsCompleted));
+        // 从未完成变为已完成时保留 200ms 再隐藏，给玩家一个可感知的消失过程。
+        if (HideCompleted && previous.IsKnown && !previous.IsCompleted && detail.IsCompleted)
+        {
+            _fadingMarkerIds.Add(marker.Id);
+            _fadeTimer.Stop();
+            _fadeTimer.Start();
+        }
     }
 
     private async Task LoadSelectedMarkerIconAsync(string? url)
@@ -2756,9 +2776,20 @@ public partial class MapWindowViewModel : ObservableObject
         var markers = MarkerScope.Visible(CreateMarkerScopeRequest());
 
         FilteredMarkers.Clear();
+        var visibleIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var marker in markers)
         {
             FilteredMarkers.Add(marker);
+            visibleIds.Add(marker.Id);
+        }
+
+        // 刚完成的点位在淡出窗口内继续显示，窗口结束后由计时器刷新移除。
+        foreach (var marker in _allMarkers)
+        {
+            if (_fadingMarkerIds.Contains(marker.Id) && visibleIds.Add(marker.Id))
+            {
+                FilteredMarkers.Add(marker);
+            }
         }
 
         // 筛选结果变化时先撤掉上一轮路线，否则新路线计算完成前会暂时画出旧筛选的线。
