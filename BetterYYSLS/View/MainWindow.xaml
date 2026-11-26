@@ -119,6 +119,9 @@
                     <ContextMenu.DataContext>
                         <markup:ServiceLocator Type="{x:Type viewModel:NotifyIconViewModel}" />
                     </ContextMenu.DataContext>
+                    <ui:MenuItem Command="{Binding OpenMapCommand}"
+                                 Header="打开大地图"
+                                 Icon="{ui:SymbolIcon Map24}" />
                     <ui:MenuItem Command="{Binding ExitCommand}"
                                  Header="退出"
                                  Icon="{ui:SymbolIcon Dismiss24}" />

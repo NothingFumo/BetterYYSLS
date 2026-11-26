@@ -23,6 +23,9 @@ public partial class MapWindow : Window
     private const int GwlExstyle = -20;
     private const int WsExTransparent = 0x20;
     private const int WsExLayered = 0x80000;
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(IntPtr hWnd);
+
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNotTopmost = new(-2);
     private const uint SwpNoSize = 0x0001;
@@ -44,6 +47,7 @@ public partial class MapWindow : Window
     private readonly DispatcherTimer _followTimer;
     private readonly DispatcherTimer _clickThroughTimer;
     private readonly DispatcherTimer _topmostTimer;
+    private readonly DispatcherTimer _gameStateTimer;
     private readonly DispatcherTimer _closeConfirmTimer;
     private readonly HotkeyHook _hotkeyHook = new();
     private DateTime _closeConfirmUntil;
@@ -53,6 +57,7 @@ public partial class MapWindow : Window
     private bool _windowIsTransparent;
     private bool _topmostApplied;
     private bool _fullScreenApplied;
+    private bool _hiddenByGame;
     private Rect _fullScreenRestoreBounds;
     private nint _gameWindowHandle;
 
@@ -72,6 +77,9 @@ public partial class MapWindow : Window
         // 游戏可能也是置顶窗口，定期重新声明 TOPMOST，避免被游戏重新压到下面。
         _topmostTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         _topmostTimer.Tick += (_, _) => EnsureTopmost();
+        // 游戏最小化时把地图一起隐藏，恢复时回到原来的位置。
+        _gameStateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _gameStateTimer.Tick += (_, _) => UpdateGameWindowVisibility();
         // 关闭前需要 1.5 秒内再次点击确认，避免误触游戏右上角操作。
         _closeConfirmTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
         _closeConfirmTimer.Tick += (_, _) =>
@@ -104,6 +112,7 @@ public partial class MapWindow : Window
             ApplyFullScreen(_viewModel.IsFullScreen);
             ApplyAlwaysOnTop(_viewModel.IsAlwaysOnTop);
             _topmostTimer.Start();
+            _gameStateTimer.Start();
             RegisterClickThroughHotkey();
             if (_viewModel.IsFollowGame)
             {
@@ -124,6 +133,7 @@ public partial class MapWindow : Window
         _followTimer.Stop();
         _clickThroughTimer.Stop();
         _topmostTimer.Stop();
+        _gameStateTimer.Stop();
         SetWindowTransparent(false);
         _viewModel.StopLiveTracking();
         if (_hotkeyRegistered)
@@ -146,6 +156,44 @@ public partial class MapWindow : Window
         catch (InvalidOperationException)
         {
             // 热键被其他程序占用时保留界面按钮作为退路。
+        }
+    }
+
+    /// <summary>
+    /// 游戏最小化时隐藏地图，恢复时重新显示；用户主动关闭或最小化时保持隐藏。
+    /// </summary>
+    private void UpdateGameWindowVisibility()
+    {
+        if (_gameWindowHandle == 0 || !IsWindowVisible(_gameWindowHandle))
+        {
+            var handle = SystemControl.FindHandleByProcessName("yysls");
+            if (handle != 0)
+            {
+                _gameWindowHandle = handle;
+            }
+        }
+
+        if (_gameWindowHandle == 0)
+        {
+            return;
+        }
+
+        var minimized = IsIconic(_gameWindowHandle);
+        if (minimized)
+        {
+            if (IsVisible && !_hiddenByGame)
+            {
+                _hiddenByGame = true;
+                Hide();
+            }
+
+            return;
+        }
+
+        if (_hiddenByGame)
+        {
+            _hiddenByGame = false;
+            Show();
         }
     }
 

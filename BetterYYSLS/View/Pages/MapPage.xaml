@@ -75,6 +75,10 @@
                                      IsChecked="{Binding Map.RecordMapSelection, Mode=TwoWay}"
                                      Margin="0,0,0,8"
                                      ToolTip="下次登录默认选中上次选择的区域与位面" />
+                    <ui:ToggleSwitch Content="跟随游戏窗口"
+                                     IsChecked="{Binding Map.IsFollowGame, Mode=TwoWay}"
+                                     Margin="0,0,0,8"
+                                     ToolTip="开启后地图随游戏窗口移动与缩放；关闭时记住用户拖动的位置" />
                     <ui:ToggleSwitch Content="地图工具默认置顶"
                                      IsChecked="{Binding Map.IsAlwaysOnTop, Mode=TwoWay}"
                                      Margin="0,0,0,8"

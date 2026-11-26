@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace BetterYYSLS.ViewModel;
 
@@ -26,6 +27,11 @@ namespace BetterYYSLS.ViewModel;
 public partial class MapWindowViewModel : ObservableObject
 {
     private static readonly HttpClient IconHttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
+
+    /// <summary>
+    /// 定时轮询完成态时每轮最多请求的点位数。
+    /// </summary>
+    private const int MaxCompletionPollTargets = 300;
     private readonly List<MapMarker> _allMarkers = [];
     private readonly Dictionary<string, BitmapImage> _iconCache = new(StringComparer.Ordinal);
     private readonly Dictionary<string, BitmapImage> _categoryIconCache = new(StringComparer.Ordinal);
@@ -40,6 +46,11 @@ public partial class MapWindowViewModel : ObservableObject
     private readonly Dictionary<string, MapMarkerDetails> _detailsCache = new(StringComparer.Ordinal);
     private readonly GodlikeGameLocationService _locationService = new();
     private readonly GodlikeSessionService _sessionService = new();
+    // 实时地图完成态轮询：只取当前筛选范围的前若干个点位，避免全量请求。
+    private readonly DispatcherTimer _completionPollTimer = new()
+    {
+        Interval = TimeSpan.FromSeconds(30)
+    };
 
     /// <summary>从持久化配置恢复地图选项时阻止重复保存。</summary>
     private bool _restoringMapSelection;
@@ -58,6 +69,7 @@ public partial class MapWindowViewModel : ObservableObject
         _locationService.LocationChanged += OnLocationChanged;
         _locationService.StatusChanged += OnLocationStatusChanged;
         _sessionService.StateChanged += OnSessionChanged;
+        _completionPollTimer.Tick += (_, _) => RefreshCompletionNow(MaxCompletionPollTargets);
         _completionDebounceTimer.Tick += (_, _) =>
         {
             _completionDebounceTimer.Stop();
@@ -82,6 +94,7 @@ public partial class MapWindowViewModel : ObservableObject
 
         _locationService.SubType = SelectedRegion?.SubTypes.FirstOrDefault() ?? "1";
         _locationService.Start();
+        _completionPollTimer.Start();
         try
         {
             _sessionService.StartWatching();
@@ -99,6 +112,7 @@ public partial class MapWindowViewModel : ObservableObject
     /// </summary>
     public void StopLiveTracking()
     {
+        _completionPollTimer.Stop();
         _locationService.Stop();
         IsLiveTracking = false;
         LocationStatus = "实时坐标已停止";
@@ -248,7 +262,7 @@ public partial class MapWindowViewModel : ObservableObject
     /// 是否跟随游戏窗口。
     /// </summary>
     [ObservableProperty]
-    private bool _isFollowGame = true;
+    private bool _isFollowGame;
 
     /// <summary>
     /// 是否让玩家标记始终位于地图视口正中。
@@ -1042,6 +1056,7 @@ public partial class MapWindowViewModel : ObservableObject
             return;
         }
 
+        IsFollowGame = config.FollowGameWindow;
         RecordFilterPreferences = config.RecordFilterPreferences;
         RecordMapSelection = config.RecordMapSelection;
         HideMinimapEdgeIcons = config.HideMinimapEdgeIcons;
@@ -1060,6 +1075,7 @@ public partial class MapWindowViewModel : ObservableObject
             return;
         }
 
+        config.FollowGameWindow = IsFollowGame;
         config.RecordFilterPreferences = RecordFilterPreferences;
         config.RecordMapSelection = RecordMapSelection;
         config.HideMinimapEdgeIcons = HideMinimapEdgeIcons;
@@ -2413,6 +2429,8 @@ public partial class MapWindowViewModel : ObservableObject
         }
     }
 
+    partial void OnIsFollowGameChanged(bool value) => SaveMapSettings();
+
     partial void OnRecordFilterPreferencesChanged(bool value) => SaveMapSettings();
 
     partial void OnRecordMapSelectionChanged(bool value) => SaveMapSettings();
@@ -2438,7 +2456,7 @@ public partial class MapWindowViewModel : ObservableObject
     /// <summary>
     /// 立即刷新完成状态；若上一轮仍在执行，则在本轮结束后补刷，确保切换角色后拿到新角色的数据。
     /// </summary>
-    private void RefreshCompletionNow()
+    private void RefreshCompletionNow(int maxTargets = int.MaxValue)
     {
         _completionDebounceTimer.Stop();
         if (_completionRefreshRunning)
@@ -2447,7 +2465,7 @@ public partial class MapWindowViewModel : ObservableObject
             return;
         }
 
-        _ = RefreshCompletionStatesAsync();
+        _ = RefreshCompletionStatesAsync(maxTargets);
     }
 
     /// <summary>
@@ -2467,7 +2485,7 @@ public partial class MapWindowViewModel : ObservableObject
     /// <summary>
     /// 批量读取当前筛选点位的完成状态，供“隐藏已完成”使用。
     /// </summary>
-    private async Task RefreshCompletionStatesAsync()
+    private async Task RefreshCompletionStatesAsync(int maxTargets = int.MaxValue)
     {
         if (_completionRefreshRunning || Snapshot is null)
         {
@@ -2475,6 +2493,11 @@ public partial class MapWindowViewModel : ObservableObject
         }
 
         var targets = GetCompletionCandidates();
+        if (targets.Count > maxTargets)
+        {
+            // 轮询只覆盖当前筛选范围的前若干个点，避免 30 秒一次的全量请求。
+            targets = targets.Take(maxTargets).ToList();
+        }
         if (targets.Count == 0)
         {
             _completionRefreshCompleted = true;

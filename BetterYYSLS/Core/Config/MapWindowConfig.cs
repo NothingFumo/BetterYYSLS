@@ -39,6 +39,12 @@ public partial class MapWindowConfig : ObservableObject
     private bool _recordMapSelection = true;
 
     /// <summary>
+    /// 地图窗口跟随游戏窗口移动与缩放；默认关闭，保持用户拖动的位置。
+    /// </summary>
+    [ObservableProperty]
+    private bool _followGameWindow;
+
+    /// <summary>
     /// 地图窗口默认置顶。
     /// </summary>
     [ObservableProperty]
