@@ -315,14 +315,6 @@ public partial class MapWindow : Window
     }
 
     /// <summary>
-    /// 打开或关闭顶栏左侧的地图控制菜单。
-    /// </summary>
-    private void OnHeaderMenuClick(object sender, RoutedEventArgs e)
-    {
-        HeaderMenuPopup.IsOpen = !HeaderMenuPopup.IsOpen;
-    }
-
-    /// <summary>
     /// 关闭地图：首次点击进入确认状态，1.5 秒内再次点击才隐藏。
     /// </summary>
     private void OnCloseMenuClick(object sender, RoutedEventArgs e)
@@ -339,7 +331,6 @@ public partial class MapWindow : Window
         _closeConfirmTimer.Stop();
         _closeConfirmUntil = default;
         HeaderCloseButton.Content = "关闭";
-        HeaderMenuPopup.IsOpen = false;
         // 穿透状态由窗口样式控制，隐藏前先恢复交互，避免下次打开仍无法点击。
         _viewModel.IsClickThrough = false;
         Hide();
